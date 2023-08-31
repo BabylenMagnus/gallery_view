@@ -80,7 +80,7 @@ def add_text(img, page, thickness, threshold):
 def save_img(img, page):
     img = Image.fromarray(img)
     name = RESULT_DIRS[int(page)]
-    img.save(save_path + name + str(len(os.listdir(save_path + name))) + ".png")
+    img.save(save_path + name + str(len(glob.glob(save_path + name + "*.png"))) + ".png")
 
 
 with gr.Blocks() as demo:
@@ -146,7 +146,7 @@ with gr.Blocks() as demo:
 
     save_button.click(
         save_img,
-        [img, page],
+        [image, page],
         []
     )
 
