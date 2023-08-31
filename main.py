@@ -1,30 +1,24 @@
-import json
 import os
-import pandas as pd
 import numpy as np
 import cv2
 
 import gradio as gr
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image
 import glob
 
 
-RESULT_PATH = "/home/jjjj/Documents/Inpaint-Anything/results_8/"
-BBOX_PATH = "/home/jjjj/Pictures/without_/bboxes.json"
-
-ORIG_IMG = "/home/jjjj/Documents/new"
+RESULT_PATH = "results/"
+ORIG_IMG = "/root/new/"
 
 log_path = "log.txt"
 
-
-with open(BBOX_PATH, "r") as t:
-    BBOXES = json.load(t)
 
 RESULT_DIRS = [i for i in os.listdir(RESULT_PATH) if os.path.isdir(os.path.join(RESULT_PATH, i))]
 
 
 def get_imgs(num):
-    return [Image.open(i) for i in glob.glob(RESULT_PATH + RESULT_DIRS[int(num)] + "/*.jpg")]
+    return ([Image.open(os.path.join(ORIG_IMG, RESULT_DIRS[int(num)] + ".jpg"))] +
+            [Image.open(i) for i in glob.glob(RESULT_PATH + RESULT_DIRS[int(num)] + "/*.jpg")])
 
 
 def change_dir(num, button=None):
@@ -47,7 +41,7 @@ def load_img_to_array(img_p):
     return np.array(img)
 
 
-def add_text(img, page):
+def add_text(img, page, thickness, threshold):
     orig_img = load_img_to_array(os.path.join(ORIG_IMG, RESULT_DIRS[int(page)] + ".jpg"))
 
     a = Image.fromarray(orig_img).convert("L")
@@ -57,13 +51,13 @@ def add_text(img, page):
     blured = cv2.GaussianBlur(a, (1, 1), cv2.BORDER_DEFAULT)
 
     mask = np.zeros([orig_img.shape[0], orig_img.shape[1]], dtype=np.uint8)
-    mask[310:][blured[310:] > 195] = 255
+    mask[310:][blured[310:] > threshold] = 255
 
     cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 
     for c in cnts:
-        cv2.drawContours(mask, [c], -1, 255, thickness=3)
+        cv2.drawContours(mask, [c], -1, 255, thickness=int(thickness))
 
     mask = np.stack([mask, mask, mask], axis=2)
 
@@ -129,6 +123,8 @@ with gr.Blocks() as demo:
                     #     headers=["name", "left", "right", "top", "bottom"],
                     #     datatype=["str", "number", "number", "number", "number"]
                     # )
+                    threshold = gr.Number(value=195, minimum=150, maximum=250, label="threshold")
+                    thickness = gr.Number(value=3, minimum=0, maximum=15, label="thickness")
                     add_text_to_image = gr.Button("add text", variant="primary")
 
     page.submit(
@@ -157,10 +153,10 @@ with gr.Blocks() as demo:
 
     add_text_to_image.click(
         add_text,
-        [image, page],
+        [image, page, thickness, threshold],
         [image]
     )
 
 
 if __name__ == "__main__":
-    demo.launch(share=True, server_name="0.0.0.0", server_port=5000)
+    demo.launch(share=True, server_name="0.0.0.0", server_port=5010)
