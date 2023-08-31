@@ -7,8 +7,10 @@ from PIL import Image
 import glob
 
 
-RESULT_PATH = "results/"
+RESULT_PATH = "/root/inpaint_api/results/"
 ORIG_IMG = "/root/new/"
+
+save_path = "saves/"
 
 log_path = "log.txt"
 
@@ -75,26 +77,10 @@ def add_text(img, page, thickness, threshold):
     return img
 
 
-# def add_text(img, result):
-#     print(len(result))
-#
-#     img = Image.fromarray(img)
-#     for j in range(len(result)):
-#         j = result.loc[j]
-#         h = j["bottom"] - j["top"]
-#         w = j["right"] - j["left"]
-#
-#         image = Image.new('L', (int(w * 2), int(h * 2)), "white")
-#
-#         draw = ImageDraw.Draw(image)
-#         myFont = ImageFont.truetype("/home/jjjj/Downloads/Blacknorthdemo-mLE25.otf", size=h)
-#         _, _, w_, h_ = draw.textbbox((0, 0), j["name"], font=myFont)
-#         draw.text((0, 0), j["name"], font=myFont, fill="black")
-#         text_ = np.array(image)[:h_, :w_]
-#         text_ = Image.fromarray(text_).resize((int(w), int(h)), reducing_gap=3.0)
-#         img.paste(text_, (j["left"], j["bottom"]), mask=Image.fromarray(255 - np.array(text_)))
-#
-#     return img
+def save_img(img, page):
+    img = Image.fromarray(img)
+    name = RESULT_DIRS[int(page)]
+    img.save(save_path + name + str(len(os.listdir(save_path + name))) + ".png")
 
 
 with gr.Blocks() as demo:
@@ -126,6 +112,7 @@ with gr.Blocks() as demo:
                     threshold = gr.Number(value=195, minimum=150, maximum=250, label="threshold")
                     thickness = gr.Number(value=3, minimum=0, maximum=15, label="thickness")
                     add_text_to_image = gr.Button("add text", variant="primary")
+                    save_button = gr.Button("Save image", variant="primary")
 
     page.submit(
         change_dir,
@@ -155,6 +142,12 @@ with gr.Blocks() as demo:
         add_text,
         [image, page, thickness, threshold],
         [image]
+    )
+
+    save_button.click(
+        save_img,
+        [img, page],
+        []
     )
 
 
