@@ -20,13 +20,14 @@ BBOX_PATH = "/root/without/bboxes.json"
 UP_FONT_PATH = "PassionOne-Regular.ttf"
 DOWN_FONT_PATH = "RedHatText-VariableFont_wght.ttf"
 
+FONT_PATH = "fonts/"
+
 
 with open(BBOX_PATH, "r") as t:
     BBOXES = json.load(t)
 
 
 save_path = "saves/"
-
 log_path = "log.txt"
 
 
@@ -167,6 +168,14 @@ with gr.Blocks() as demo:
                         headers=["text", "top", "height", "up_font"],
                         datatype=["str", "number", "number", "number"]
                     )
+
+                    up_font = gr.Dropdown(
+                        os.listdir(FONT_PATH), label="Верхний шрифт", value=os.listdir(FONT_PATH)[0]
+                    )
+                    down_font = gr.Dropdown(
+                        os.listdir(FONT_PATH), label="Down шрифт", value=os.listdir(FONT_PATH)[1]
+                    )
+
                     threshold = gr.Number(value=195, minimum=150, maximum=250, label="threshold")
                     thickness = gr.Number(value=3, minimum=0, maximum=15, label="thickness")
 
