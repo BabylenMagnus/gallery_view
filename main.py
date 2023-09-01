@@ -9,13 +9,13 @@ import glob
 import json
 
 
-# RESULT_PATH = "/root/inpaint_api/results/"
-# ORIG_IMG = "/root/new/"
+RESULT_PATH = "/root/inpaint_api/results/"
+ORIG_IMG = "/root/new/"
 
-RESULT_PATH = "/home/jjjj/Pictures/inpaint_api/results/"
-ORIG_IMG = "/home/jjjj/Documents/new/"
+# RESULT_PATH = "/home/jjjj/Pictures/inpaint_api/results/"
+# ORIG_IMG = "/home/jjjj/Documents/new/"
 
-BBOX_PATH = "/home/jjjj/Pictures/without/bboxes.json"
+BBOX_PATH = "/root/without/bboxes.json"
 
 UP_FONT_PATH = "PassionOne-Regular.ttf"
 DOWN_FONT_PATH = "RedHatText-VariableFont_wght.ttf"
