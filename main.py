@@ -9,11 +9,11 @@ import glob
 import json
 
 
-RESULT_PATH = "/root/inpaint_api/results/"
-ORIG_IMG = "/root/new/"
+# RESULT_PATH = "/root/inpaint_api/results/"
+# ORIG_IMG = "/root/new/"
 
-# RESULT_PATH = "/home/jjjj/Pictures/inpaint_api/results/"
-# ORIG_IMG = "/home/jjjj/Documents/new/"
+RESULT_PATH = "/home/jjjj/Pictures/inpaint_api/results/"
+ORIG_IMG = "/home/jjjj/Documents/new/"
 
 BBOX_PATH = "/home/jjjj/Pictures/without/bboxes.json"
 
@@ -39,6 +39,7 @@ def get_imgs(num):
 
 
 def change_dir(num, button=None):
+    print(num)
     if button is None:
         return get_imgs(num), "# " + RESULT_DIRS[int(num)]
     if button == "+" and num < len(RESULT_DIRS):
@@ -59,8 +60,8 @@ def select_image(evt: gr.SelectData, gallery, num):
 
     return (
         Image.open(os.path.join(ORIG_IMG, RESULT_DIRS[int(num)] + ".jpg")),
-        Image.open(gallery[evt.index]['name']),
-        Image.open(gallery[evt.index]['name']), pd.DataFrame(bb))
+        Image.open(gallery[evt.index]['text']),
+        Image.open(gallery[evt.index]['text']), pd.DataFrame(bb))
 
 
 def add_text_font(img, result):
@@ -73,11 +74,11 @@ def add_text_font(img, result):
         draw = ImageDraw.Draw(image)
         font = ImageFont.truetype(UP_FONT_PATH if j["up_font"] else DOWN_FONT_PATH, int(j["height"]))
         _, _, w, h = draw.textbbox(
-            (0, 0), j["name"], font=font
+            (0, 0), j["text"], font=font
         )
 
         draw = ImageDraw.Draw(img)
-        draw.text(((img.size[0] - w) / 2, int(j["top"])), j["name"], font=font, fill="white")
+        draw.text(((img.size[0] - w) / 2, int(j["top"])), j["text"], font=font, fill="white")
 
         # image = Image.new('L', (int(w * 2), int(h * 2)), "white")
         #
@@ -163,7 +164,7 @@ with gr.Blocks() as demo:
                 image = gr.Image(height=800, show_download_button=True)
                 with gr.Column():
                     result = gr.Dataframe(
-                        headers=["name", "top", "height", "up_font"],
+                        headers=["text", "top", "height", "up_font"],
                         datatype=["str", "number", "number", "number"]
                     )
                     threshold = gr.Number(value=195, minimum=150, maximum=250, label="threshold")
