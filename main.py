@@ -9,16 +9,14 @@ import glob
 import json
 
 
-RESULT_PATH = "/root/inpaint_api/results/"
-ORIG_IMG = "/root/new/"
+# RESULT_PATH = "/root/inpaint_api/results/"
+# ORIG_IMG = "/root/new/"
 
-# RESULT_PATH = "/home/jjjj/Pictures/inpaint_api/results/"
-# ORIG_IMG = "/home/jjjj/Documents/new/"
+RESULT_PATH = "/home/jjjj/Pictures/inpaint_api/results/"
+ORIG_IMG = "/home/jjjj/Documents/new/"
 
 BBOX_PATH = "/root/without/bboxes.json"
-
-UP_FONT_PATH = "PassionOne-Regular.ttf"
-DOWN_FONT_PATH = "RedHatText-VariableFont_wght.ttf"
+# BBOX_PATH = "/home/jjjj/Pictures/without/bboxes.json"
 
 FONT_PATH = "fonts/"
 
@@ -61,11 +59,11 @@ def select_image(evt: gr.SelectData, gallery, num):
 
     return (
         Image.open(os.path.join(ORIG_IMG, RESULT_DIRS[int(num)] + ".jpg")),
-        Image.open(gallery[evt.index]['text']),
-        Image.open(gallery[evt.index]['text']), pd.DataFrame(bb))
+        Image.open(gallery[evt.index]['name']),
+        Image.open(gallery[evt.index]['name']), pd.DataFrame(bb))
 
 
-def add_text_font(img, result):
+def add_text_font(img, result, up_font, down_font):
     img = Image.fromarray(img)
 
     for j in range(len(result)):
@@ -73,7 +71,12 @@ def add_text_font(img, result):
 
         image = Image.new('RGB', img.size, "white")
         draw = ImageDraw.Draw(image)
-        font = ImageFont.truetype(UP_FONT_PATH if j["up_font"] else DOWN_FONT_PATH, int(j["height"]))
+        font = ImageFont.truetype(
+            os.path.join(FONT_PATH, up_font) if j["up_font"]
+            else os.path.join(FONT_PATH, down_font),
+            int(j["height"])
+        )
+
         _, _, w, h = draw.textbbox(
             (0, 0), j["text"], font=font
         )
@@ -180,7 +183,7 @@ with gr.Blocks() as demo:
                     thickness = gr.Number(value=3, minimum=0, maximum=15, label="thickness")
 
                     add_text_to_image = gr.Button("add text", variant="primary")
-                    add_text_from_pont = gr.Button("add text own font", variant="primary")
+                    add_text_from_font = gr.Button("add text own font", variant="primary")
                     save_button = gr.Button("Save image", variant="primary")
 
         with gr.TabItem("Hide"):
@@ -222,9 +225,9 @@ with gr.Blocks() as demo:
         []
     )
 
-    add_text_from_pont.click(
+    add_text_from_font.click(
         add_text_font,
-        [image_orig, result],
+        [image_orig, result, up_font, down_font],
         [image]
     )
 
