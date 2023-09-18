@@ -1,1 +1,18 @@
 wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1QJjK3ITR0zecBePWa4Vcw10bws5SEEfF' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1QJjK3ITR0zecBePWa4Vcw10bws5SEEfF" -O new.zip && rm -rf /tmp/cookies.txt
+
+
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=13Kq35-to2-3RSI1gNqqReHsjNIIxcB9-' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=13Kq35-to2-3RSI1gNqqReHsjNIIxcB9-" -O stable-diffusion-webui.zip.001 && rm -rf /tmp/cookies.txt
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=135mwraPn6xI-Qa1cl4Dgap5kdIrqyaA0' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=135mwraPn6xI-Qa1cl4Dgap5kdIrqyaA0" -O stable-diffusion-webui.zip.002 && rm -rf /tmp/cookies.txt
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1NA-AnvuE9wh-onr0GNO61uzUnkQ1QAvS' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1NA-AnvuE9wh-onr0GNO61uzUnkQ1QAvS" -O stable-diffusion-webui.zip.003 && rm -rf /tmp/cookies.txt
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1TqvLEnu3MpPcXl_KnPnuYcXTehU0TLvr' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1TqvLEnu3MpPcXl_KnPnuYcXTehU0TLvr" -O stable-diffusion-webui.zip.004 && rm -rf /tmp/cookies.txt
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1bdMiS5eG3KlbLNy3oSMIzTTx53Xkjy4w' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1bdMiS5eG3KlbLNy3oSMIzTTx53Xkjy4w" -O stable-diffusion-webui.zip.005 && rm -rf /tmp/cookies.txt
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1nAKRYG_Eejc2Mh59zEaZPdSKwusWOESH' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1nAKRYG_Eejc2Mh59zEaZPdSKwusWOESH" -O stable-diffusion-webui.zip.006 && rm -rf /tmp/cookies.txt
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=10p32aju0rX8p56rFjTfaU9dySt6CBxnY' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=10p32aju0rX8p56rFjTfaU9dySt6CBxnY" -O stable-diffusion-webui.zip.007 && rm -rf /tmp/cookies.txt
+

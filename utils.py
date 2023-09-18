@@ -20,6 +20,14 @@ A111_url = "http://127.0.0.1:7860"
 BASE_NEGATIV_PROMPT = \
     ("poster, text, logo of video game, poster art, concert poster, the logo for the video game, the word sipop on it, "
      "logo, poster art")
+SIZES = {
+    "Главный 1174 х 360": [360, 1174],
+    "Главный 698 х 360": [360, 698],
+    "Внутряк 1014 х 360": [360, 1014],
+    "Форма логина 640 х 80": [80, 640],
+    "Мобила cтраницы 1242 х 480": [480, 1242],
+    "Мобила форма логина 1194 х 288": [288, 1194]
+}
 
 # model_path = "models/CTRNet_G.onnx"
 # ctrnet = CTRNetInfer(model_path)
@@ -71,18 +79,22 @@ def choose_bboxes(img, bboxes, map_bboxes, evt: gr.SelectData):
     return img, bboxes, map_bboxes
 
 
-def remove_text(img, bboxes, map_bboxes, result):
+def remove_text(img, bboxes, map_bboxes, result, prompt, negative_prompt, model):
     b = []
     for bb, i in zip(bboxes, map_bboxes):
         if i:
             b.append(bb)
 
-    n = max(img.shape[:2])
+    frame_around_size = 10
+    mask = Image.new("L", (img.shape[1], img.shape[0]))
+    draw = ImageDraw.Draw(mask)
 
-    new_img = np.zeros((n, n, 3), dtype=np.uint8)
-    new_img[:img.shape[0], :img.shape[1], :] += img
+    for i in bboxes:
+        i = np.array(i)
+        i[0, :] -= frame_around_size
+        i[1, :] += frame_around_size
 
-    pred = ctrnet(new_img, np.array(b))
+        draw.rectangle([tuple(x) for x in i.tolist()], fill="white")
 
     data = {}
     data["text"] = []
@@ -98,7 +110,28 @@ def remove_text(img, bboxes, map_bboxes, result):
             data["left"].append(r[:, 0].min())
             data["height"].append(r[:, 1].max() - r[:, 1].min())
 
-    return pred[:img.shape[0], :img.shape[1], :], pd.DataFrame(data)
+    mask = np.array(mask)
+
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "steps": 40,
+        "batch_size": 1,
+        "include_init_images": True,
+        "mask": to_b64(mask),
+        "init_images": [
+            to_b64(img)
+        ],
+        "inpainting_fill": 0,
+        "override_settings": {
+            "sd_model_checkpoint": model
+        },
+        "width": img.shape[1],
+        "height": img.shape[0]
+    }
+
+    response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
+    return Image.open(io.BytesIO(base64.b64decode(response.json()["images"][0]))), pd.DataFrame(data)
 
 
 def add_text_font(img, result, font_name, color):
@@ -115,7 +148,8 @@ def add_text_font(img, result, font_name, color):
 
 
 def to_b64(img):
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    if len(img.shape) == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     jpg_img = cv2.imencode('.png', img)
     b64_string = base64.b64encode(jpg_img[1]).decode("utf-8")
     return b64_string
@@ -138,7 +172,9 @@ def inpaint_image(img, model, prompt, negative_prompt):
         "inpainting_fill": 0,
         "override_settings": {
             "sd_model_checkpoint": model
-        }
+        },
+        "width": img.shape[1],
+        "height": img.shape[0]
     }
 
     response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
@@ -148,4 +184,57 @@ def inpaint_image(img, model, prompt, negative_prompt):
 def get_models():
     return [i['title'] for i in requests.get(f'{A111_url}/sdapi/v1/sd-models').json()]
 
+
+def outpainting(img, model, left, top, right, bottom, size, prompt, negative_prompt):
+    h, w = SIZES[size]
+    if img.shape[0] > h or img.shape[1] > w:
+        percentage = min(w / img.shape[1], h / img.shape[0])
+        new_w = int(percentage * img.shape[1])
+        new_h = int(percentage * img.shape[0])
+        img = np.array(Image.fromarray(img).resize((new_w, new_h), reducing_gap=3))
+
+    n = 5
+
+    new_img = np.zeros([h, w, 3], dtype=np.uint8)
+
+    if top != bottom:
+        top = 0 if top else new_img.shape[0] - img.shape[0]
+        bottom = new_img.shape[0] if bottom else img.shape[0]
+    if right != left:
+        left = 0 if left else new_img.shape[1] - img.shape[1]
+        right = new_img.shape[1] if right else img.shape[1]
+
+    if right == left:
+        left = (new_img.shape[1] - img.shape[1]) // 2
+        right = left + img.shape[1]
+    if top == bottom:
+        top = (new_img.shape[0] - img.shape[0]) // 2
+        bottom = top + img.shape[0]
+
+    new_img[top:bottom, left:right, :] = img
+
+    mask = np.ones([new_img.shape[0], new_img.shape[1], 3], dtype=np.uint8) * 255
+    mask[top + n:bottom - n, left + n:right - n, :] = 0
+    mask = mask.astype(np.uint8)
+
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "steps": 40,
+        "batch_size": 1,
+        "include_init_images": True,
+        "mask": to_b64(mask),
+        "init_images": [
+            to_b64(new_img)
+        ],
+        "inpainting_fill": 0,
+        "override_settings": {
+            "sd_model_checkpoint": model
+        },
+        "width": new_img.shape[1],
+        "height": new_img.shape[0]
+    }
+
+    response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
+    return Image.open(io.BytesIO(base64.b64decode(response.json()["images"][0])))
 
