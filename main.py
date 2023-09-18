@@ -161,6 +161,8 @@ with gr.Blocks() as demo:
                 value=get_imgs(page.value), object_fit="contain",
                 label="Generated images", show_label=False, elem_id="gallery", columns=9, height=850
             )
+            with gr.Row():
+                choose_img = gr.Button("выбрать", variant="primary")
 
         with gr.TabItem("Add text"):
             with gr.Row():
@@ -168,7 +170,7 @@ with gr.Blocks() as demo:
                 image = gr.Image(height=800, show_download_button=True)
                 with gr.Column():
                     result = gr.Dataframe(
-                        headers=["text", "top", "height", "up_font"],
+                        headers=["text", "top", "left", "height"],
                         datatype=["str", "number", "number", "number"]
                     )
 
