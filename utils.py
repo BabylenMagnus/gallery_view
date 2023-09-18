@@ -1,4 +1,3 @@
-from ctrnet_infer import CTRNetInfer
 import gradio as gr
 
 import numpy as np
@@ -89,7 +88,7 @@ def remove_text(img, bboxes, map_bboxes, result, prompt, negative_prompt, model)
     mask = Image.new("L", (img.shape[1], img.shape[0]))
     draw = ImageDraw.Draw(mask)
 
-    for i in bboxes:
+    for i in b:
         i = np.array(i)
         i[0, :] -= frame_around_size
         i[1, :] += frame_around_size
