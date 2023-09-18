@@ -25,9 +25,6 @@ with gr.Blocks() as demo:
                     with_text = gr.Image(label='With text')
 
                 with gr.Column():
-                    prompt_text = gr.Textbox(label="Prompt", value="")
-                    negative_prompt_text = gr.Textbox(label="Negative Prompt", value=BASE_NEGATIV_PROMPT)
-
                     font_choose = gr.Dropdown(
                         os.listdir(FONT_PATH), label="Шрифт", value=os.listdir(FONT_PATH)[0]
                     )
@@ -107,7 +104,7 @@ with gr.Blocks() as demo:
 
     remove_text_but.click(
         remove_text,
-        [image_orig, bboxes, map_bboxes, predict_ocr, prompt_text, negative_prompt_text, model_name],
+        [image_orig, ocr_res, map_bboxes, predict_ocr],
         [without_text, text_table]
     )
 
