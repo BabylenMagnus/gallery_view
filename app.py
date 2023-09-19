@@ -1,9 +1,4 @@
-import gradio as gr
 from utils import *
-
-
-FONT_PATH = "fonts/"
-MODELS = get_models()
 
 
 with gr.Blocks() as demo:
@@ -53,6 +48,15 @@ with gr.Blocks() as demo:
                 with gr.Column():
                     prompt = gr.Textbox(label="Prompt", value="")
                     negative_prompt = gr.Textbox(label="Negative Prompt", value=BASE_NEGATIV_PROMPT)
+                    sampler = gr.Dropdown(
+                        SAMPLERS, label="Sampler", value="Euler"
+                    )
+                    steps = gr.Slider(minimum=1, maximum=100, value=40, label="steps", show_label=True)
+                    cfg_scale = gr.Slider(minimum=1, maximum=20, value=7, label="cfg scale", show_label=True)
+                    denoising_strength = gr.Slider(
+                        minimum=0.01, maximum=1, value=0.75, label="Denoising strength", show_label=True
+                    )
+
                     generate_img = gr.Button("Сгенерировать")
 
                     size_choose = gr.Dropdown(
@@ -65,27 +69,7 @@ with gr.Blocks() as demo:
                         top = gr.Checkbox(label="top")
                         bottom = gr.Checkbox(label="bottom")
 
-                    outpaint_image = gr.Button("Сгенерировать")
-
-
-        # with gr.TabItem("Outpaint"):
-        #     with gr.Row():
-        #         with gr.Column():
-        #         with gr.Column():
-        #             prompt_out = gr.Textbox(label="Prompt", value="")
-        #             negative_prompt_out = gr.Textbox(label="Negative Prompt", value=BASE_NEGATIV_PROMPT)
-        #
-        #             size_choose = gr.Dropdown(
-        #                 list(SIZES.keys()), label="Размер", value=list(SIZES.keys())[0]
-        #             )
-        #
-        #             with gr.Row():
-        #                 left = gr.Checkbox(label="left")
-        #                 right = gr.Checkbox(label="right")
-        #                 top = gr.Checkbox(label="top")
-        #                 bottom = gr.Checkbox(label="bottom")
-        #
-        #             outpaint_image = gr.Button("Сгенерировать")
+                    outpaint_image = gr.Button("Дорисовать")
 
         with gr.TabItem("Hide"):
             image_orig = gr.Image(height=800, show_download_button=True)
@@ -116,15 +100,18 @@ with gr.Blocks() as demo:
 
     generate_img.click(
         inpaint_image,
-        [masked_image, model_name, prompt, negative_prompt],
+        [masked_image, model_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength],
         [inpainted_image]
     )
 
     outpaint_image.click(
         outpainting,
-        [outpainted_image, model_name, left, top, right, bottom, size_choose, prompt, negative_prompt],
+        [
+            outpainted_image, model_name, left, top, right, bottom, size_choose,
+            prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength
+        ],
         [result_image]
     )
 
 if __name__ == "__main__":
-    demo.launch(share=True, server_name="0.0.0.0", server_port=5010)
+    demo.launch(share=True, server_name="0.0.0.0", server_port=5000)

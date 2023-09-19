@@ -1,6 +1,12 @@
 jupyter
-gradio
-numpy
-opencv-python
+gradio~=3.40.1
+numpy~=1.25.2
+opencv-python~=4.8.0.76
 scikit-image
-easyocr
+easyocr~=1.7.1
+
+pandas
+Pillow
+requests
+pyclipper
+shapely

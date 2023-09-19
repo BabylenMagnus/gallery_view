@@ -15,7 +15,6 @@ import cv2
 
 
 eader = easyocr.Reader(['en'])
-FONT_PATH = "fonts/"
 A111_url = "http://127.0.0.1:7860"
 BASE_NEGATIV_PROMPT = \
     ("poster, text, logo of video game, poster art, concert poster, the logo for the video game, the word sipop on it, "
@@ -57,7 +56,7 @@ def ocr_detect(img):
     draw = ImageDraw.Draw(new_img)
 
     for (x1, y1), (x2, y2) in bboxes:
-        draw.rectangle([(x1, y1), (x2, y2)])
+        draw.rectangle(((x1, y1), (x2, y2)))
 
     return new_img, img, bboxes, np.array(res), result
 
@@ -185,14 +184,11 @@ def to_b64(img):
     return b64_string
 
 
-def inpaint_image(img, model, prompt, negative_prompt):
-    mask = img["mask"]
-    img = img["image"]
-
+def generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength):
     payload = {
         "prompt": prompt,
         "negative_prompt": negative_prompt,
-        "steps": 40,
+        "steps": steps,
         "batch_size": 1,
         "include_init_images": True,
         "mask": to_b64(mask),
@@ -204,18 +200,34 @@ def inpaint_image(img, model, prompt, negative_prompt):
             "sd_model_checkpoint": model
         },
         "width": img.shape[1],
-        "height": img.shape[0]
+        "height": img.shape[0],
+        "sampler_index": sampler,
+        "cfg_scale": cfg_scale,
+        "denoising_strength": denoising_strength
     }
 
     response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
     return Image.open(io.BytesIO(base64.b64decode(response.json()["images"][0])))
 
 
+def inpaint_image(img, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength):
+    mask = img["mask"]
+    img = img["image"]
+    return generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength)
+
+
 def get_models():
     return [i['title'] for i in requests.get(f'{A111_url}/sdapi/v1/sd-models').json()]
 
 
-def outpainting(img, model, left, top, right, bottom, size, prompt, negative_prompt):
+def get_samplers():
+    return [i["name"] for i in requests.get(url=f'http://127.0.0.1:7860/sdapi/v1/samplers').json()]
+
+
+def outpainting(
+        img, model, left, top, right, bottom, size, prompt,
+        negative_prompt, sampler, steps, cfg_scale, denoising_strength
+):
     h, w = SIZES[size]
     if img.shape[0] > h or img.shape[1] > w:
         percentage = min(w / img.shape[1], h / img.shape[0])
@@ -246,25 +258,9 @@ def outpainting(img, model, left, top, right, bottom, size, prompt, negative_pro
     mask = np.ones([new_img.shape[0], new_img.shape[1], 3], dtype=np.uint8) * 255
     mask[top + n:bottom - n, left + n:right - n, :] = 0
     mask = mask.astype(np.uint8)
+    return generate_image(new_img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength)
 
-    payload = {
-        "prompt": prompt,
-        "negative_prompt": negative_prompt,
-        "steps": 40,
-        "batch_size": 1,
-        "include_init_images": True,
-        "mask": to_b64(mask),
-        "init_images": [
-            to_b64(new_img)
-        ],
-        "inpainting_fill": 0,
-        "override_settings": {
-            "sd_model_checkpoint": model
-        },
-        "width": new_img.shape[1],
-        "height": new_img.shape[0]
-    }
 
-    response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
-    return Image.open(io.BytesIO(base64.b64decode(response.json()["images"][0])))
-
+FONT_PATH = "fonts/"
+MODELS = get_models()
+SAMPLERS = get_samplers()
