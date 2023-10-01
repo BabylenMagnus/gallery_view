@@ -25,7 +25,8 @@ SIZES = {
     "Внутряк 1014 х 360": [360, 1014],
     "Форма логина 640 х 80": [80, 640],
     "Мобила cтраницы 1242 х 480": [480, 1242],
-    "Мобила форма логина 1194 х 288": [288, 1194]
+    "Мобила форма логина 1194 х 288": [288, 1194],
+    "Стандарт 408×544": [544, 408],
 }
 
 model_path = "models/CTRNet_G.onnx"
@@ -78,73 +79,23 @@ def choose_bboxes(img, bboxes, map_bboxes, evt: gr.SelectData):
     return img, bboxes, map_bboxes
 
 
-# def remove_text(img, bboxes, map_bboxes, result, prompt, negative_prompt, model):
-#     b = []
-#     for bb, i in zip(bboxes, map_bboxes):
-#         if i:
-#             b.append(bb)
-#
-#     frame_around_size = 10
-#     mask = Image.new("L", (img.shape[1], img.shape[0]))
-#     draw = ImageDraw.Draw(mask)
-#
-#     for i in b:
-#         i = np.array(i)
-#         i[0, :] -= frame_around_size
-#         i[1, :] += frame_around_size
-#
-#         draw.rectangle([tuple(x) for x in i.tolist()], fill="white")
-#
-#     data = {}
-#     data["text"] = []
-#     data["top"] = []
-#     data["left"] = []
-#     data["height"] = []
-#
-#     for r, i in zip(result, map_bboxes):
-#         if i:
-#             data["text"].append(r[1])
-#             r = np.array(r[0])
-#             data["top"].append(r[:, 1].min())
-#             data["left"].append(r[:, 0].min())
-#             data["height"].append(r[:, 1].max() - r[:, 1].min())
-#
-#     mask = np.array(mask).astype(np.uint8)
-#
-#     payload = {
-#         "prompt": prompt,
-#         "negative_prompt": negative_prompt,
-#         "steps": 40,
-#         "batch_size": 1,
-#         "include_init_images": True,
-#         "mask": to_b64(mask),
-#         "init_images": [
-#             to_b64(img)
-#         ],
-#         "inpainting_fill": 0,
-#         "override_settings": {
-#             "sd_model_checkpoint": model
-#         },
-#         "width": img.shape[1],
-#         "height": img.shape[0]
-#     }
-#
-#     response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
-#     return Image.open(io.BytesIO(base64.b64decode(response.json()["images"][0]))), pd.DataFrame(data)
-
-
-def remove_text(img, bboxes, map_bboxes, result):
+def remove_text(
+        img, bboxes, map_bboxes, result, prompt, negative_prompt, model, sampler, steps, cfg_scale, denoising_strength
+):
     b = []
     for bb, i in zip(bboxes, map_bboxes):
         if i:
             b.append(bb)
 
-    n = max(img.shape[:2])
+    frame_around_size = 10
+    mask = Image.new("L", (img.shape[1], img.shape[0]))
+    draw = ImageDraw.Draw(mask)
 
-    new_img = np.zeros((n, n, 3), dtype=np.uint8)
-    new_img[:img.shape[0], :img.shape[1], :] += img
-
-    pred = ctrnet(new_img, np.array(b))
+    for i in b:
+        i = np.array(i)
+        i[0, :] -= frame_around_size
+        i[1, :] += frame_around_size
+        draw.rectangle([tuple(x) for x in i.tolist()], fill="white")
 
     data = {}
     data["text"] = []
@@ -160,7 +111,15 @@ def remove_text(img, bboxes, map_bboxes, result):
             data["left"].append(r[:, 0].min())
             data["height"].append(r[:, 1].max() - r[:, 1].min())
 
-    return pred[:img.shape[0], :img.shape[1], :], pd.DataFrame(data)
+    mask = np.array(mask).astype(np.uint8)
+
+    Image.fromarray(mask).save("mask_delete_text.png")
+    Image.fromarray(img).save("img_delete_text.png")
+
+    return (
+        generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength),
+        pd.DataFrame(data)
+    )
 
 
 def add_text_font(img, result, font_name, color):
@@ -213,6 +172,9 @@ def generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cf
 def inpaint_image(img, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength):
     mask = img["mask"]
     img = img["image"]
+    Image.fromarray(mask).save("mask_inp.png")
+    Image.fromarray(img).save("img_inp.png")
+
     return generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength)
 
 

@@ -88,7 +88,10 @@ with gr.Blocks() as demo:
 
     remove_text_but.click(
         remove_text,
-        [image_orig, ocr_res, map_bboxes, predict_ocr],
+        [
+            texted_img, bboxes, map_bboxes, predict_ocr, prompt,
+            negative_prompt, model_name, sampler, steps, cfg_scale, denoising_strength
+        ],
         [without_text, text_table]
     )
 

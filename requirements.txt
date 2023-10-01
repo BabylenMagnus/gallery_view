@@ -1,12 +1,14 @@
 jupyter
-gradio~=3.40.1
-numpy~=1.25.2
-opencv-python~=4.8.0.76
+gradio
+numpy
+opencv-python
 scikit-image
-easyocr~=1.7.1
+easyocr
 
 pandas
 Pillow
 requests
 pyclipper
 shapely
+
+onnxruntime-gpu
