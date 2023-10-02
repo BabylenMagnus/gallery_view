@@ -10,5 +10,3 @@ Pillow
 requests
 pyclipper
 shapely
-
-onnxruntime-gpu

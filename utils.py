@@ -1,4 +1,3 @@
-from ctrnet_infer import CTRNetInfer
 import gradio as gr
 
 import numpy as np
@@ -29,9 +28,6 @@ SIZES = {
     "Стандарт 408×544": [544, 408],
 }
 
-model_path = "models/CTRNet_G.onnx"
-ctrnet = CTRNetInfer(model_path)
-
 
 def ocr_detect(img):
     new_img = Image.fromarray(img.copy())
@@ -59,7 +55,7 @@ def ocr_detect(img):
     for (x1, y1), (x2, y2) in bboxes:
         draw.rectangle(((x1, y1), (x2, y2)))
 
-    return new_img, img, bboxes, np.array(res), result
+    return new_img, img, bboxes, np.array(res)
 
 
 def choose_bboxes(img, bboxes, map_bboxes, evt: gr.SelectData):
@@ -80,7 +76,7 @@ def choose_bboxes(img, bboxes, map_bboxes, evt: gr.SelectData):
 
 
 def remove_text(
-        img, bboxes, map_bboxes, result, prompt, negative_prompt, model, sampler, steps, cfg_scale, denoising_strength
+        img, bboxes, map_bboxes, prompt, negative_prompt, model, sampler, steps, cfg_scale, denoising_strength
 ):
     b = []
     for bb, i in zip(bboxes, map_bboxes):
@@ -97,29 +93,12 @@ def remove_text(
         i[1, :] += frame_around_size
         draw.rectangle([tuple(x) for x in i.tolist()], fill="white")
 
-    data = {}
-    data["text"] = []
-    data["top"] = []
-    data["left"] = []
-    data["height"] = []
-
-    for r, i in zip(result, map_bboxes):
-        if i:
-            data["text"].append(r[1])
-            r = np.array(r[0])
-            data["top"].append(r[:, 1].min())
-            data["left"].append(r[:, 0].min())
-            data["height"].append(r[:, 1].max() - r[:, 1].min())
-
     mask = np.array(mask).astype(np.uint8)
 
     Image.fromarray(mask).save("mask_delete_text.png")
     Image.fromarray(img).save("img_delete_text.png")
 
-    return (
-        generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength),
-        pd.DataFrame(data)
-    )
+    return generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength)
 
 
 def add_text_font(img, result, font_name, color):
@@ -221,6 +200,52 @@ def outpainting(
     mask[top + n:bottom - n, left + n:right - n, :] = 0
     mask = mask.astype(np.uint8)
     return generate_image(new_img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength)
+
+
+def add_text_to_xy(img, text, x, y, font_choose, font_size, color):
+    pil_img = Image.fromarray(img)
+    font = ImageFont.truetype(os.path.join(FONT_PATH, font_choose), size=font_size)
+
+    image = Image.new('RGB', pil_img.size, "white")
+    draw = ImageDraw.Draw(image)
+
+    _, _, w, h = draw.textbbox(
+        (0, 0), text, font=font
+    )
+
+    # Extract the selected coordinates from the event data
+    coord = (x - w // 2, y - h // 2)
+    draw = ImageDraw.Draw(pil_img)
+
+    # Add text to the selected coordinate
+    draw.text(coord, text, font=font, fill=color)
+    img_with_text = np.array(pil_img)
+
+    return img_with_text
+
+
+def add_text_to_coords(img, text, evt: gr.SelectData, font_choose, font_size, color):
+    return (
+        add_text_to_xy(img, text, evt.index[0], evt.index[1], font_choose, font_size, color), evt.index[0], evt.index[1]
+    )
+
+
+def save_text(input_img, text_input, x_cord, y_cord, font_choose, font_size, color, history):
+    if history is None:
+        history = []
+    history.append([text_input, x_cord, y_cord, font_choose, font_size, color])
+    return add_text_to_xy(input_img, *history[-1]), history
+
+
+def undo(history, img):
+    if history is None or not len(history):
+        return None, img
+
+    history.pop()
+
+    for args in history:
+        img = add_text_to_xy(img, *args)
+    return history, img
 
 
 FONT_PATH = "fonts/"

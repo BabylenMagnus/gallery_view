@@ -7,6 +7,8 @@ with gr.Blocks() as demo:
     bboxes = gr.State(None)
     map_bboxes = gr.State(None)
 
+    history = gr.State(None)
+
     model_name = gr.Dropdown(
         label="Выберите модель", choices=MODELS, show_label=True, value=MODELS[0]
     )
@@ -17,19 +19,30 @@ with gr.Blocks() as demo:
                 with gr.Column():
                     texted_img = gr.Image(show_download_button=True)
                     without_text = gr.Image(label='Without text')
-                    with_text = gr.Image(label='With text')
 
+                with gr.Column():
+                    remove_text_but = gr.Button("Remove Text", variant="primary")
+
+        with gr.TabItem("Add Text"):
+            with gr.Row():
+                input_img = gr.Image(label="Input")
+                output_img = gr.Image(label="Modified Image")
                 with gr.Column():
                     font_choose = gr.Dropdown(
                         os.listdir(FONT_PATH), label="Шрифт", value=os.listdir(FONT_PATH)[0]
                     )
-                    color = gr.Textbox(value="white")
-                    text_table = gr.Dataframe(
-                        headers=["text", "top", "height", "left"],
-                        datatype=["str", "number", "number", "number"]
-                    )
-                    remove_text_but = gr.Button("Remove Text", variant="primary")
-                    add_text = gr.Button("Add Text")
+                    font_size = gr.Number(label="Размер шрифта", value=24)
+                    color = gr.Textbox(label="Цвет", value="white")
+
+                    text_input = gr.Textbox(label="Текст")
+
+                    with gr.Row():
+                        x_cord = gr.Slider(minimum=1, maximum=1000, value=40, label="X", show_label=True)
+                        y_cord = gr.Slider(minimum=1, maximum=1000, value=40, label="Y", show_label=True)
+
+                    add_text_button = gr.Button("Добавить текст по координатам")
+                    save_button = gr.Button("Сохранить текст", variant="primary")
+                    undo_button = gr.Button("Отменить")
 
         with gr.TabItem("Inpaint"):
             with gr.Row():
@@ -71,13 +84,14 @@ with gr.Blocks() as demo:
 
                     outpaint_image = gr.Button("Дорисовать")
 
-        with gr.TabItem("Hide"):
+        with gr.TabItem("hide"):
             image_orig = gr.Image(height=800, show_download_button=True)
+            original_img = gr.Image(show_download_button=False)
 
     texted_img.upload(
         ocr_detect,
         [texted_img],
-        [texted_img, image_orig, bboxes, ocr_res, predict_ocr]
+        [texted_img, image_orig, bboxes, ocr_res]
     )
 
     texted_img.select(
@@ -89,16 +103,40 @@ with gr.Blocks() as demo:
     remove_text_but.click(
         remove_text,
         [
-            texted_img, bboxes, map_bboxes, predict_ocr, prompt,
-            negative_prompt, model_name, sampler, steps, cfg_scale, denoising_strength
+            texted_img, bboxes, map_bboxes, prompt, negative_prompt, model_name, sampler, steps,
+            cfg_scale, denoising_strength
         ],
-        [without_text, text_table]
+        [without_text]
     )
 
-    add_text.click(
-        add_text_font,
-        [without_text, text_table, font_choose, color],
-        [with_text]
+    input_img.upload(
+        lambda x: (x, x),
+        [input_img],
+        [input_img, original_img]
+    )
+
+    input_img.select(
+        add_text_to_coords,
+        [input_img, text_input, font_choose, font_size, color],
+        [output_img, x_cord, y_cord]
+    )
+
+    add_text_button.click(
+        add_text_to_xy,
+        [input_img, text_input, x_cord, y_cord, font_choose, font_size, color],
+        output_img
+    )
+
+    save_button.click(
+        save_text,
+        [input_img, text_input, x_cord, y_cord, font_choose, font_size, color, history],
+        [input_img, history]
+    )
+
+    undo_button.click(
+        undo,
+        [history, original_img],
+        [history, input_img]
     )
 
     generate_img.click(
