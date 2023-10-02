@@ -216,7 +216,7 @@ def outpainting_with_value(
 
 def add_text_to_xy(img, text, x, y, font_choose, font_size, color):
     pil_img = Image.fromarray(img)
-    font = ImageFont.truetype(os.path.join(FONT_PATH, font_choose), size=font_size)
+    font = ImageFont.truetype(os.path.join(FONT_PATH, font_choose), size=int(font_size))
 
     image = Image.new('RGB', pil_img.size, "white")
     draw = ImageDraw.Draw(image)
