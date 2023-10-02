@@ -21,6 +21,17 @@ with gr.Blocks() as demo:
                     without_text = gr.Image(label='Without text')
 
                 with gr.Column():
+                    prompt_rt = gr.Textbox(label="Prompt", value="")
+                    negative_prompt_rt = gr.Textbox(label="Negative Prompt", value=BASE_NEGATIV_PROMPT)
+                    sampler_rt = gr.Dropdown(
+                        SAMPLERS, label="Sampler", value="Euler"
+                    )
+                    steps_rt = gr.Slider(minimum=1, maximum=100, value=40, label="steps", show_label=True)
+                    cfg_scale_rt = gr.Slider(minimum=1, maximum=20, value=7, label="cfg scale", show_label=True)
+                    denoising_strength_rt = gr.Slider(
+                        minimum=0.01, maximum=1, value=0.75, label="Denoising strength", show_label=True
+                    )
+
                     remove_text_but = gr.Button("Remove Text", variant="primary")
 
         with gr.TabItem("Add Text"):
@@ -76,6 +87,11 @@ with gr.Blocks() as demo:
                         list(SIZES.keys()), label="Размер", value=list(SIZES.keys())[0]
                     )
 
+                    gr.Markdown("Свои значения")
+                    with gr.Row():
+                        x_value = gr.Number(label="Высота", value=409)
+                        y_value = gr.Number(label="Ширина", value=544)
+
                     with gr.Row():
                         left = gr.Checkbox(label="left")
                         right = gr.Checkbox(label="right")
@@ -83,6 +99,7 @@ with gr.Blocks() as demo:
                         bottom = gr.Checkbox(label="bottom")
 
                     outpaint_image = gr.Button("Дорисовать")
+                    outpaint_with_value = gr.Button("Дорисовать со своими значениями")
 
         with gr.TabItem("hide"):
             image_orig = gr.Image(height=800, show_download_button=True)
@@ -103,8 +120,8 @@ with gr.Blocks() as demo:
     remove_text_but.click(
         remove_text,
         [
-            texted_img, bboxes, map_bboxes, prompt, negative_prompt, model_name, sampler, steps,
-            cfg_scale, denoising_strength
+            texted_img, bboxes, map_bboxes, prompt_rt, negative_prompt_rt, model_name, sampler_rt, steps_rt,
+            cfg_scale_rt, denoising_strength_rt
         ],
         [without_text]
     )
@@ -146,9 +163,18 @@ with gr.Blocks() as demo:
     )
 
     outpaint_image.click(
-        outpainting,
+        outpainting_with_value,
         [
             outpainted_image, model_name, left, top, right, bottom, size_choose,
+            prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength
+        ],
+        [result_image]
+    )
+
+    outpaint_with_value.click(
+        outpainting,
+        [
+            outpainted_image, model_name, left, top, right, bottom, x_value, y_value,
             prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength
         ],
         [result_image]

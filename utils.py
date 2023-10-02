@@ -166,10 +166,11 @@ def get_samplers():
 
 
 def outpainting(
-        img, model, left, top, right, bottom, size, prompt,
+        img, model, left, top, right, bottom, h, w, prompt,
         negative_prompt, sampler, steps, cfg_scale, denoising_strength
 ):
-    h, w = SIZES[size]
+    h = int(h)
+    w = int(w)
     if img.shape[0] > h or img.shape[1] > w:
         percentage = min(w / img.shape[1], h / img.shape[0])
         new_w = int(percentage * img.shape[1])
@@ -200,6 +201,17 @@ def outpainting(
     mask[top + n:bottom - n, left + n:right - n, :] = 0
     mask = mask.astype(np.uint8)
     return generate_image(new_img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength)
+
+
+def outpainting_with_value(
+        img, model, left, top, right, bottom, size, prompt,
+        negative_prompt, sampler, steps, cfg_scale, denoising_strength
+):
+    h, w = SIZES[size]
+    return outpainting(
+        img, model, left, top, right, bottom, h, w, prompt, negative_prompt,
+        sampler, steps, cfg_scale, denoising_strength
+    )
 
 
 def add_text_to_xy(img, text, x, y, font_choose, font_size, color):
