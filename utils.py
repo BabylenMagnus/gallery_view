@@ -1,7 +1,7 @@
+import PIL.Image
 import gradio as gr
 
 import numpy as np
-import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 
 import easyocr
@@ -11,6 +11,8 @@ import io
 import requests
 import base64
 import cv2
+
+from datetime import datetime
 
 
 eader = easyocr.Reader(['en'])
@@ -27,6 +29,10 @@ SIZES = {
     "Мобила форма логина 1194 х 288": [288, 1194],
     "Стандарт 408×544": [544, 408],
 }
+
+
+def log_img(img):
+    img.save(os.path.join("log", datetime.now().strftime("%d%m_%H_%M%S") + ".png"))
 
 
 def ocr_detect(img):
@@ -76,14 +82,14 @@ def choose_bboxes(img, bboxes, map_bboxes, evt: gr.SelectData):
 
 
 def remove_text(
-        img, bboxes, map_bboxes, prompt, negative_prompt, model, sampler, steps, cfg_scale, denoising_strength
+        img, bboxes, map_bboxes, prompt, negative_prompt, model,
+        sampler, steps, cfg_scale, denoising_strength, frame_around_size=10
 ):
     b = []
     for bb, i in zip(bboxes, map_bboxes):
         if i:
             b.append(bb)
 
-    frame_around_size = 10
     mask = Image.new("L", (img.shape[1], img.shape[0]))
     draw = ImageDraw.Draw(mask)
 
@@ -145,7 +151,9 @@ def generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cf
     }
 
     response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
-    return Image.open(io.BytesIO(base64.b64decode(response.json()["images"][0])))
+    img = Image.open(io.BytesIO(base64.b64decode(response.json()["images"][0])))
+    log_img(img)
+    return img
 
 
 def inpaint_image(img, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength):
@@ -162,7 +170,7 @@ def get_models():
 
 
 def get_samplers():
-    return [i["name"] for i in requests.get(url=f'http://127.0.0.1:7860/sdapi/v1/samplers').json()]
+    return [i["name"] for i in requests.get(url=f'{A111_url}/sdapi/v1/samplers').json()]
 
 
 def outpainting(
@@ -260,6 +268,92 @@ def undo(history, img):
     return history, img
 
 
+def get_model_controlnet(name):
+    a = requests.get(url=f'{A111_url}/controlnet/model_list').json()
+    for i in a["model_list"]:
+        if name in i:
+            return i
+
+
+def controlnet_preview(module_name, img, x=64, y=64):
+    payload = {
+        "controlnet_module": module_name,
+        "controlnet_input_images": [to_b64(img)],
+        "controlnet_processor_res": max(img.shape),
+        "controlnet_threshold_a": x,
+        "controlnet_threshold_b": y
+    }
+    a = requests.post(url=f'{A111_url}/controlnet/detect', json=payload).json()
+    return Image.open(io.BytesIO(base64.b64decode(a["images"][0])))
+
+
+def controlnet_generate(
+        module_controlnet, model_controlnet, img, model, prompt, negative_prompt, sampler, steps,
+        cfg_scale, denoising_strength, guidance_start, guidance_end, control_mode, x=64, y=64
+):
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "steps": steps,
+        "batch_size": 1,
+        "include_init_images": True,
+        "init_images": [
+            to_b64(img)
+        ],
+        "override_settings": {
+            "sd_model_checkpoint": model
+        },
+        "width": img.shape[1],
+        "height": img.shape[0],
+        "sampler_index": sampler,
+        "cfg_scale": cfg_scale,
+        "denoising_strength": denoising_strength,
+        "alwayson_scripts": {
+            "controlnet": {
+                "args": [
+                    {
+                        "input_image": to_b64(img),
+                        "module": module_controlnet,
+                        "model": model_controlnet,
+                        "processor_res": max(img.shape),
+                        "threshold_a": x,
+                        "threshold_b": y,
+                        "guidance_start": guidance_start,
+                        "guidance_end": guidance_end,
+                        "control_mode": CONTROL_MODE.index(control_mode),
+                        "pixel_perfect": True
+                    }
+                ]
+            }
+        }
+    }
+    response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
+    img = Image.open(io.BytesIO(base64.b64decode(response.json()["images"][0])))
+    log_img(img)
+    return img
+
+
+def canny_preview(img, x, y):
+    return controlnet_preview("canny", img, x, y)
+
+
+def depth_preview(img, type, x, y):
+    return controlnet_preview(type, img, x, y)
+
+
+def canny_generate(
+        img, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
+        guidance_start, guidance_end, control_mode, x, y
+):
+
+    return controlnet_generate(
+        "canny", get_model_controlnet("canny"), img, model, prompt, negative_prompt,
+        sampler, steps, cfg_scale, denoising_strength, guidance_start, guidance_end, control_mode, x, y
+    )
+
+
 FONT_PATH = "fonts/"
-MODELS = get_models()
+MODELS = [i for i in get_models() if "inp" not in i.lower()]
+INP_MODELS = [i for i in get_models() if "inp" in i.lower()]
+CONTROL_MODE = ["Balanced", "My prompt is more important", "ControlNet is more important"]
 SAMPLERS = get_samplers()
