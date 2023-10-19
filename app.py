@@ -142,7 +142,10 @@ with gr.Blocks() as demo:
                             with gr.Row():
                                 canny_preview_button = gr.Button("preview canny")
                                 canny_push = gr.Button("Сгенерировать", variant="primary")
-                            canny_out_img = gr.Image()
+                            canny_out_img = gr.Gallery(
+                                object_fit="contain", label="Generated images",
+                                show_label=False, elem_id="gallery", columns=5
+                            )
 
                     with gr.TabItem("Depth"):
                         with gr.Column():
@@ -165,7 +168,10 @@ with gr.Blocks() as demo:
                             with gr.Row():
                                 depth_preview_button = gr.Button("preview depth")
                                 depth_push = gr.Button("Сгенерировать", variant="primary")
-                            depth_out_img = gr.Image()
+                            depth_out_img = gr.Gallery(
+                                object_fit="contain", label="Generated images",
+                                show_label=False, elem_id="gallery", columns=5
+                            )
 
                 with gr.Column():
                     prompt_cn = gr.Textbox(label="Prompt", value="")
@@ -188,6 +194,7 @@ with gr.Blocks() as demo:
                     control_mode = gr.Dropdown(
                         label="Control Mode", choices=CONTROL_MODE, show_label=True, value=CONTROL_MODE[0]
                     )
+                    batch_size_cn = gr.Number(label="batch size", value=1)
 
         with gr.TabItem("hide"):
             image_orig = gr.Image(height=800, show_download_button=True)
@@ -287,9 +294,19 @@ with gr.Blocks() as demo:
         canny_generate,
         [
             canny_input_img, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn, cfg_scale_cn,
-            denoising_strength_cn, guidance_start, guidance_end, control_mode, canny_low_threshold, canny_high_threshold
+            denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
+            control_mode, canny_low_threshold, canny_high_threshold
         ],
-        [canny_out_img]
+        [canny_out_img, canny_preview_img]
+    )
+
+    depth_push.click(
+        depth_generate,
+        [
+            depth_input_img, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn, cfg_scale_cn,
+            denoising_strength_cn, batch_size_cn, guidance_start, guidance_end, control_mode, depth_near, depth_back
+        ],
+        [depth_out_img, depth_preview_img]
     )
 
 if __name__ == "__main__":
