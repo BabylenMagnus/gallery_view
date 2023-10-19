@@ -84,7 +84,7 @@ def choose_bboxes(img, bboxes, map_bboxes, evt: gr.SelectData):
 
 
 def remove_text(
-        img, bboxes, map_bboxes, prompt, negative_prompt, model,
+        img, bboxes, map_bboxes, prompt, negative_prompt, model, vae_name,
         sampler, steps, cfg_scale, denoising_strength, frame_around_size=10, batch_size=1
 ):
     b = []
@@ -108,7 +108,7 @@ def remove_text(
     Image.fromarray(img).save("img_delete_text.png")
 
     return generate_image(
-        img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
+        img, mask, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
     )
 
 
@@ -134,7 +134,7 @@ def to_b64(img):
 
 
 def generate_image(
-        img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size=1
+        img, mask, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size=1
 ):
     payload = {
         "prompt": prompt,
@@ -148,7 +148,8 @@ def generate_image(
         ],
         "inpainting_fill": 0,
         "override_settings": {
-            "sd_model_checkpoint": model
+            "sd_model_checkpoint": model,
+            "sd_vae": vae_name
         },
         "width": img.shape[1],
         "height": img.shape[0],
@@ -163,14 +164,14 @@ def generate_image(
     return imgs
 
 
-def inpaint_image(img, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size):
+def inpaint_image(img, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size):
     mask = img["mask"]
     img = img["image"]
     Image.fromarray(mask).save("mask_inp.png")
     Image.fromarray(img).save("img_inp.png")
 
     return generate_image(
-        img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
+        img, mask, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
     )
 
 
@@ -178,12 +179,16 @@ def get_models():
     return [i['title'] for i in requests.get(f'{A111_url}/sdapi/v1/sd-models').json()]
 
 
+def get_vaes():
+    return [i['model_name'] for i in requests.get(f'{A111_url}/sdapi/v1/sd-vae').json()]
+
+
 def get_samplers():
     return [i["name"] for i in requests.get(url=f'{A111_url}/sdapi/v1/samplers').json()]
 
 
 def outpainting(
-        img, model, left, top, right, bottom, h, w, prompt,
+        img, model, vae_name, left, top, right, bottom, h, w, prompt,
         negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
 ):
     h = int(h)
@@ -218,17 +223,17 @@ def outpainting(
     mask[top + n:bottom - n, left + n:right - n, :] = 0
     mask = mask.astype(np.uint8)
     return generate_image(
-        new_img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
+        new_img, mask, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
     )
 
 
 def outpainting_with_value(
-        img, model, left, top, right, bottom, size, prompt,
+        img, model, vae_name, left, top, right, bottom, size, prompt,
         negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
 ):
     h, w = SIZES[size]
     return outpainting(
-        img, model, left, top, right, bottom, h, w, prompt, negative_prompt,
+        img, model, vae_name, left, top, right, bottom, h, w, prompt, negative_prompt,
         sampler, steps, cfg_scale, denoising_strength, batch_size
     )
 
@@ -299,7 +304,7 @@ def controlnet_preview(module_name, img, x=64, y=64):
 
 
 def controlnet_generate(
-        module_controlnet, model_controlnet, img, model, prompt, negative_prompt, sampler, steps,
+        module_controlnet, model_controlnet, img, model, vae_name, prompt, negative_prompt, sampler, steps,
         cfg_scale, denoising_strength, guidance_start, guidance_end, control_mode, x=64, y=64
 ):
     payload = {
@@ -312,7 +317,8 @@ def controlnet_generate(
             to_b64(img)
         ],
         "override_settings": {
-            "sd_model_checkpoint": model
+            "sd_model_checkpoint": model,
+            "sd_vae": vae_name
         },
         "width": img.shape[1],
         "height": img.shape[0],
@@ -353,12 +359,12 @@ def depth_preview(img, type, x, y):
 
 
 def canny_generate(
-        img, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
+        img, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
         guidance_start, guidance_end, control_mode, x, y
 ):
 
     return controlnet_generate(
-        "canny", get_model_controlnet("canny"), img, model, prompt, negative_prompt,
+        "canny", get_model_controlnet("canny"), img, model, vae_name, prompt, negative_prompt,
         sampler, steps, cfg_scale, denoising_strength, guidance_start, guidance_end, control_mode, x, y
     )
 
@@ -367,4 +373,5 @@ FONT_PATH = "fonts/"
 MODELS = [i for i in get_models() if "inp" not in i.lower()]
 INP_MODELS = [i for i in get_models() if "inp" in i.lower()]
 CONTROL_MODE = ["Balanced", "My prompt is more important", "ControlNet is more important"]
+VAES = ["None"] + get_vaes()
 SAMPLERS = get_samplers()

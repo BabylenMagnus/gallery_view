@@ -18,6 +18,10 @@ with gr.Blocks() as demo:
             label="Upgrade модель", choices=MODELS, show_label=True, value=MODELS[0]
         )
 
+        vae_name = gr.Dropdown(
+            label="VAE модель", choices=VAES, show_label=True, value=VAES[0]
+        )
+
     with gr.Tabs():
         with gr.TabItem("Remove Text"):
             with gr.Row():
@@ -204,7 +208,7 @@ with gr.Blocks() as demo:
     remove_text_but.click(
         remove_text,
         [
-            image_orig, bboxes, map_bboxes, prompt_rt, negative_prompt_rt, inpaint_model_name,
+            image_orig, bboxes, map_bboxes, prompt_rt, negative_prompt_rt, inpaint_model_name, vae_name,
             sampler_rt, steps_rt, cfg_scale_rt, denoising_strength_rt, frame_around_size, batch_size_rt
         ],
         [without_text]
@@ -243,7 +247,7 @@ with gr.Blocks() as demo:
     generate_img.click(
         inpaint_image,
         [
-            masked_image, inpaint_model_name, prompt, negative_prompt,
+            masked_image, inpaint_model_name, vae_name, prompt, negative_prompt,
             sampler, steps, cfg_scale, denoising_strength, batch_size
         ],
         [inpainted_image]
@@ -252,7 +256,7 @@ with gr.Blocks() as demo:
     outpaint_image.click(
         outpainting_with_value,
         [
-            outpainted_image, inpaint_model_name, left, top, right, bottom, size_choose,
+            outpainted_image, inpaint_model_name, vae_name, left, top, right, bottom, size_choose,
             prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
         ],
         [result_image]
@@ -261,7 +265,7 @@ with gr.Blocks() as demo:
     outpaint_with_value.click(
         outpainting,
         [
-            outpainted_image, inpaint_model_name, left, top, right, bottom, x_value, y_value,
+            outpainted_image, inpaint_model_name, vae_name, left, top, right, bottom, x_value, y_value,
             prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
         ],
         [result_image]
@@ -282,7 +286,7 @@ with gr.Blocks() as demo:
     canny_push.click(
         canny_generate,
         [
-            canny_input_img, model_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn, cfg_scale_cn,
+            canny_input_img, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn, cfg_scale_cn,
             denoising_strength_cn, guidance_start, guidance_end, control_mode, canny_low_threshold, canny_high_threshold
         ],
         [canny_out_img]
