@@ -1,4 +1,3 @@
-import PIL.Image
 import gradio as gr
 
 import numpy as np
@@ -13,12 +12,14 @@ import base64
 import cv2
 
 from datetime import datetime
+from uuid import uuid4
 
 
 eader = easyocr.Reader(['en'])
 A111_url = "http://127.0.0.1:7860"
 BASE_NEGATIV_PROMPT = \
-    ("poster, text, logo of video game, poster art, concert poster, the logo for the video game, the word sipop on it, "
+    ("poster, text, logo of video game, poster art, concert poster, "
+     "the logo for the video game, the word sipop on it, "
      "logo, poster art")
 SIZES = {
     "Главный 1174 х 360": [360, 1174],
@@ -31,8 +32,9 @@ SIZES = {
 }
 
 
-def log_img(img):
-    img.save(os.path.join("log", datetime.now().strftime("%d%m_%H_%M%S") + ".png"))
+def log_img(imgs):
+    for img in imgs:
+        img.save(os.path.join("log", datetime.now().strftime("%d%m_%H_%M%S") + f"{str(uuid4())[:5]}.png"))
 
 
 def ocr_detect(img):
@@ -52,7 +54,7 @@ def ocr_detect(img):
         ])
 
     if len(new_) == 0:
-        return None, None
+        return img, img, None, None, None
 
     bboxes = np.array(new_).tolist()
 
@@ -61,7 +63,7 @@ def ocr_detect(img):
     for (x1, y1), (x2, y2) in bboxes:
         draw.rectangle(((x1, y1), (x2, y2)))
 
-    return new_img, img, bboxes, np.array(res)
+    return new_img, img, bboxes, np.array(res), None
 
 
 def choose_bboxes(img, bboxes, map_bboxes, evt: gr.SelectData):
@@ -83,7 +85,7 @@ def choose_bboxes(img, bboxes, map_bboxes, evt: gr.SelectData):
 
 def remove_text(
         img, bboxes, map_bboxes, prompt, negative_prompt, model,
-        sampler, steps, cfg_scale, denoising_strength, frame_around_size=10
+        sampler, steps, cfg_scale, denoising_strength, frame_around_size=10, batch_size=1
 ):
     b = []
     for bb, i in zip(bboxes, map_bboxes):
@@ -92,6 +94,7 @@ def remove_text(
 
     mask = Image.new("L", (img.shape[1], img.shape[0]))
     draw = ImageDraw.Draw(mask)
+    frame_around_size = int(frame_around_size)
 
     for i in b:
         i = np.array(i)
@@ -104,7 +107,9 @@ def remove_text(
     Image.fromarray(mask).save("mask_delete_text.png")
     Image.fromarray(img).save("img_delete_text.png")
 
-    return generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength)
+    return generate_image(
+        img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
+    )
 
 
 def add_text_font(img, result, font_name, color):
@@ -128,12 +133,14 @@ def to_b64(img):
     return b64_string
 
 
-def generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength):
+def generate_image(
+        img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size=1
+):
     payload = {
         "prompt": prompt,
         "negative_prompt": negative_prompt,
         "steps": steps,
-        "batch_size": 1,
+        "batch_size": batch_size,
         "include_init_images": True,
         "mask": to_b64(mask),
         "init_images": [
@@ -151,18 +158,20 @@ def generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cf
     }
 
     response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
-    img = Image.open(io.BytesIO(base64.b64decode(response.json()["images"][0])))
-    log_img(img)
-    return img
+    imgs = [Image.open(io.BytesIO(base64.b64decode(i))) for i in response.json()["images"]]
+    log_img(imgs)
+    return imgs
 
 
-def inpaint_image(img, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength):
+def inpaint_image(img, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size):
     mask = img["mask"]
     img = img["image"]
     Image.fromarray(mask).save("mask_inp.png")
     Image.fromarray(img).save("img_inp.png")
 
-    return generate_image(img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength)
+    return generate_image(
+        img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
+    )
 
 
 def get_models():
@@ -175,7 +184,7 @@ def get_samplers():
 
 def outpainting(
         img, model, left, top, right, bottom, h, w, prompt,
-        negative_prompt, sampler, steps, cfg_scale, denoising_strength
+        negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
 ):
     h = int(h)
     w = int(w)
@@ -208,17 +217,19 @@ def outpainting(
     mask = np.ones([new_img.shape[0], new_img.shape[1], 3], dtype=np.uint8) * 255
     mask[top + n:bottom - n, left + n:right - n, :] = 0
     mask = mask.astype(np.uint8)
-    return generate_image(new_img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength)
+    return generate_image(
+        new_img, mask, model, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
+    )
 
 
 def outpainting_with_value(
         img, model, left, top, right, bottom, size, prompt,
-        negative_prompt, sampler, steps, cfg_scale, denoising_strength
+        negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
 ):
     h, w = SIZES[size]
     return outpainting(
         img, model, left, top, right, bottom, h, w, prompt, negative_prompt,
-        sampler, steps, cfg_scale, denoising_strength
+        sampler, steps, cfg_scale, denoising_strength, batch_size
     )
 
 

@@ -23,7 +23,10 @@ with gr.Blocks() as demo:
             with gr.Row():
                 with gr.Column():
                     texted_img = gr.Image(show_download_button=True)
-                    without_text = gr.Image(label='Without text')
+                    without_text = gr.Gallery(
+                        object_fit="contain", label="Generated images",
+                        show_label=False, elem_id="gallery", columns=5
+                    )
 
                 with gr.Column():
                     prompt_rt = gr.Textbox(label="Prompt", value="")
@@ -40,6 +43,7 @@ with gr.Blocks() as demo:
                     frame_around_size = gr.Slider(
                         minimum=1, maximum=50, value=10, label="frame around size", show_label=True
                     )
+                    batch_size_rt = gr.Number(label="batch size", value=1)
 
                     remove_text_but = gr.Button("Remove Text", variant="primary")
 
@@ -72,11 +76,17 @@ with gr.Blocks() as demo:
                         masked_image = gr.Image(
                             interactive=True, tool='sketch', elem_id="image_upload", mask_opacity=1
                         )
-                        inpainted_image = gr.Image(label="Результат")
+                        inpainted_image = gr.Gallery(
+                            object_fit="contain", label="Generated images",
+                            show_label=False, elem_id="gallery", columns=5
+                        )
                     with gr.Column():
                         gr.Markdown("# Outpaint")
                         outpainted_image = gr.Image(show_download_button=True)
-                        result_image = gr.Image()
+                        result_image = gr.Gallery(
+                            object_fit="contain", label="Generated images",
+                            show_label=False, elem_id="gallery", columns=5
+                        )
 
                 with gr.Column():
                     prompt = gr.Textbox(label="Prompt", value="")
@@ -89,7 +99,7 @@ with gr.Blocks() as demo:
                     denoising_strength = gr.Slider(
                         minimum=0.01, maximum=1, value=0.75, label="Denoising strength", show_label=True
                     )
-
+                    batch_size = gr.Number(label="batch size", value=1)
                     generate_img = gr.Button("Сгенерировать")
 
                     size_choose = gr.Dropdown(
@@ -182,7 +192,7 @@ with gr.Blocks() as demo:
     texted_img.upload(
         ocr_detect,
         [texted_img],
-        [texted_img, image_orig, bboxes, ocr_res]
+        [texted_img, image_orig, bboxes, ocr_res, map_bboxes]
     )
 
     texted_img.select(
@@ -194,8 +204,8 @@ with gr.Blocks() as demo:
     remove_text_but.click(
         remove_text,
         [
-            image_orig, bboxes, map_bboxes, prompt_rt, negative_prompt_rt,
-            inpaint_model_name, sampler_rt, steps_rt, cfg_scale_rt, denoising_strength_rt, frame_around_size
+            image_orig, bboxes, map_bboxes, prompt_rt, negative_prompt_rt, inpaint_model_name,
+            sampler_rt, steps_rt, cfg_scale_rt, denoising_strength_rt, frame_around_size, batch_size_rt
         ],
         [without_text]
     )
@@ -234,7 +244,7 @@ with gr.Blocks() as demo:
         inpaint_image,
         [
             masked_image, inpaint_model_name, prompt, negative_prompt,
-            sampler, steps, cfg_scale, denoising_strength
+            sampler, steps, cfg_scale, denoising_strength, batch_size
         ],
         [inpainted_image]
     )
@@ -243,7 +253,7 @@ with gr.Blocks() as demo:
         outpainting_with_value,
         [
             outpainted_image, inpaint_model_name, left, top, right, bottom, size_choose,
-            prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength
+            prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
         ],
         [result_image]
     )
@@ -252,7 +262,7 @@ with gr.Blocks() as demo:
         outpainting,
         [
             outpainted_image, inpaint_model_name, left, top, right, bottom, x_value, y_value,
-            prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength
+            prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size
         ],
         [result_image]
     )
