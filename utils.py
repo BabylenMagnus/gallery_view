@@ -331,7 +331,6 @@ def controlnet_generate(
                     {
                         "input_image": to_b64(img),
                         "module": module_controlnet,
-                        "model": model_controlnet,
                         "processor_res": max(img.shape),
                         "threshold_a": x,
                         "threshold_b": y,
@@ -344,9 +343,14 @@ def controlnet_generate(
             }
         }
     }
+    if model_controlnet:
+        payload["alwayson_scripts"]["controlnet"]["args"][0]["model"] = model_controlnet
+
     response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
     imgs = [Image.open(io.BytesIO(base64.b64decode(i))) for i in response.json()["images"]]
     log_img(imgs)
+    if len(imgs) == batch_size:
+        return imgs
     return imgs[:-1], imgs[-1]
 
 
@@ -356,6 +360,14 @@ def canny_preview(img, x, y):
 
 def depth_preview(img, type, x, y):
     return controlnet_preview(type, img, x, y)
+
+
+def normal_preview(img, type, x):
+    return controlnet_preview(type, img, x)
+
+
+def pose_preview(img, type):
+    return controlnet_preview(type, img)
 
 
 def canny_generate(
@@ -370,13 +382,67 @@ def canny_generate(
 
 
 def depth_generate(
-        img, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size_cn,
-        guidance_start, guidance_end, control_mode, x, y
+        img, depth_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
+        batch_size_cn, guidance_start, guidance_end, control_mode, x, y
 ):
 
     return controlnet_generate(
-        "depth", get_model_controlnet("depth"), img, model, vae_name, prompt, negative_prompt,
+        depth_type, get_model_controlnet("depth"), img, model, vae_name, prompt, negative_prompt,
         sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode, x, y
+    )
+
+
+def normal_generate(
+        img, depth_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
+        batch_size_cn, guidance_start, guidance_end, control_mode, x
+):
+
+    return controlnet_generate(
+        depth_type, get_model_controlnet("normal"), img, model, vae_name, prompt, negative_prompt,
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode, x
+    )
+
+
+def pose_generate(
+        img, depth_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
+        batch_size_cn, guidance_start, guidance_end, control_mode, x
+):
+
+    return controlnet_generate(
+        depth_type, get_model_controlnet("pose"), img, model, vae_name, prompt, negative_prompt,
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode, x
+    )
+
+
+def line_generate(
+        img, depth_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
+        batch_size_cn, guidance_start, guidance_end, control_mode
+):
+    cn_name = get_model_controlnet("lineart_anime") if "anime" in depth_type else get_model_controlnet("lineart")
+
+    return controlnet_generate(
+        depth_type, cn_name, img, model, vae_name, prompt, negative_prompt,
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode
+    )
+
+
+def shuffle_generate(
+        img, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
+        batch_size_cn, guidance_start, guidance_end, control_mode
+):
+    return controlnet_generate(
+        "shuffle", get_model_controlnet("shuffle"), img, model, vae_name, prompt, negative_prompt,
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode
+    )
+
+
+def reference_generate(
+        img, reference_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
+        batch_size_cn, guidance_start, guidance_end, control_mode
+):
+    return controlnet_generate(
+        reference_type, "", img, model, vae_name, prompt, negative_prompt,
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode
     )
 
 

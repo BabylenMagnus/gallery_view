@@ -173,6 +173,101 @@ with gr.Blocks() as demo:
                                 show_label=False, elem_id="gallery", columns=5
                             )
 
+                    with gr.TabItem("NormalMap"):
+                        with gr.Column():
+                            with gr.Row():
+                                normal_input_img = gr.Image(show_download_button=True, height=600)
+                                normal_preview_img = gr.Image()
+                            with gr.Row():
+                                normal_type = gr.Dropdown(
+                                    label="Normal type", choices=[
+                                        "normal_bae", "normal_midas"
+                                    ],
+                                    show_label=True, value="normal_bae"
+                                )
+                                normal_threshold = gr.Slider(
+                                    minimum=0, maximum=1, value=0.4, label="Background Threshold", show_label=True
+                                )
+                            with gr.Row():
+                                normal_preview_button = gr.Button("preview depth")
+                                normal_push = gr.Button("Сгенерировать", variant="primary")
+                            normal_out_img = gr.Gallery(
+                                object_fit="contain", label="Generated images",
+                                show_label=False, elem_id="gallery", columns=5
+                            )
+
+                    with gr.TabItem("OpenPose"):
+                        with gr.Column():
+                            with gr.Row():
+                                pose_input_img = gr.Image(show_download_button=True, height=600)
+                                pose_preview_img = gr.Image()
+                            with gr.Row():
+                                pose_type = gr.Dropdown(
+                                    label="Pose type", choices=[
+                                        "dw_openpose_full", "openpose", "openpose_face", "openpose_faceonly",
+                                        "openpose_full", "openpose_hand"
+                                    ],
+                                    show_label=True, value="openpose"
+                                )
+                            with gr.Row():
+                                pose_preview_button = gr.Button("preview depth")
+                                pose_push = gr.Button("Сгенерировать", variant="primary")
+                            pose_out_img = gr.Gallery(
+                                object_fit="contain", label="Generated images",
+                                show_label=False, elem_id="gallery", columns=5
+                            )
+
+                    with gr.TabItem("Lineart"):
+                        with gr.Column():
+                            with gr.Row():
+                                line_input_img = gr.Image(show_download_button=True, height=600)
+                                line_preview_img = gr.Image()
+                            with gr.Row():
+                                line_type = gr.Dropdown(
+                                    label="Lineart type", choices=[
+                                        "lineart_anime", "lineart_anime_denoise", "lineart_coarse", "lineart_realistic",
+                                        "lineart_standard (from white bg & black line)",
+                                        "invert (from white bg & black line)"
+                                    ],
+                                    show_label=True, value="lineart_standard (from white bg & black line)"
+                                )
+                            with gr.Row():
+                                line_preview_button = gr.Button("preview line")
+                                line_push = gr.Button("Сгенерировать", variant="primary")
+                            line_out_img = gr.Gallery(
+                                object_fit="contain", label="Generated images",
+                                show_label=False, elem_id="gallery", columns=5
+                            )
+
+                    with gr.TabItem("Shuffle"):
+                        with gr.Column():
+                            with gr.Row():
+                                shuffle_input_img = gr.Image(show_download_button=True, height=600)
+                            with gr.Row():
+                                shuffle_push = gr.Button("Сгенерировать", variant="primary")
+                            shuffle_out_img = gr.Gallery(
+                                object_fit="contain", label="Generated images",
+                                show_label=False, elem_id="gallery", columns=5
+                            )
+
+                    with gr.TabItem("Reference"):
+                        with gr.Column():
+                            with gr.Row():
+                                reference_input_img = gr.Image(show_download_button=True, height=600)
+                            with gr.Row():
+                                reference_type = gr.Dropdown(
+                                    label="Reference type", choices=[
+                                        "reference_adain", "reference_adain+attn", "reference_only"
+                                    ],
+                                    show_label=True, value="reference_only"
+                                )
+                            with gr.Row():
+                                reference_push = gr.Button("Сгенерировать", variant="primary")
+                            reference_out_img = gr.Gallery(
+                                object_fit="contain", label="Generated images",
+                                show_label=False, elem_id="gallery", columns=5
+                            )
+
                 with gr.Column():
                     prompt_cn = gr.Textbox(label="Prompt", value="")
                     negative_prompt_cn = gr.Textbox(label="Negative Prompt", value=BASE_NEGATIV_PROMPT)
@@ -199,6 +294,7 @@ with gr.Blocks() as demo:
         with gr.TabItem("hide"):
             image_orig = gr.Image(height=800, show_download_button=True)
             original_img = gr.Image(show_download_button=False)
+            test_img = gr.Image(show_download_button=False)
 
     texted_img.upload(
         ocr_detect,
@@ -290,6 +386,24 @@ with gr.Blocks() as demo:
         [depth_preview_img]
     )
 
+    normal_preview_button.click(
+        normal_preview,
+        [normal_input_img, normal_type, normal_threshold],
+        [normal_preview_img]
+    )
+
+    pose_preview_button.click(
+        pose_preview,
+        [pose_input_img, pose_type],
+        [pose_preview_img]
+    )
+
+    line_preview_button.click(
+        pose_preview,
+        [line_input_img, line_type],
+        [line_preview_img]
+    )
+
     canny_push.click(
         canny_generate,
         [
@@ -303,10 +417,61 @@ with gr.Blocks() as demo:
     depth_push.click(
         depth_generate,
         [
-            depth_input_img, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn, cfg_scale_cn,
-            denoising_strength_cn, batch_size_cn, guidance_start, guidance_end, control_mode, depth_near, depth_back
+            depth_input_img, depth_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
+            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
+            control_mode, depth_near, depth_back
         ],
         [depth_out_img, depth_preview_img]
+    )
+
+    normal_push.click(
+        depth_generate,
+        [
+            normal_input_img, normal_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
+            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
+            control_mode, normal_threshold
+        ],
+        [normal_out_img, normal_preview_img]
+    )
+
+    pose_push.click(
+        pose_generate,
+        [
+            pose_input_img, pose_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
+            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
+            control_mode
+        ],
+        [pose_out_img, pose_preview_img]
+    )
+
+    line_push.click(
+        line_generate,
+        [
+            line_input_img, line_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
+            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
+            control_mode
+        ],
+        [line_out_img, line_preview_img]
+    )
+
+    shuffle_push.click(
+        shuffle_generate,
+        [
+            shuffle_input_img, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
+            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
+            control_mode
+        ],
+        [shuffle_out_img, test_img]
+    )
+
+    reference_push.click(
+        reference_generate,
+        [
+            reference_input_img, reference_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn,
+            steps_cn, cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
+            control_mode
+        ],
+        [reference_out_img, test_img]
     )
 
 if __name__ == "__main__":
