@@ -305,8 +305,14 @@ def controlnet_preview(module_name, img, x=64, y=64):
 
 def controlnet_generate(
         module_controlnet, model_controlnet, img, model, vae_name, prompt, negative_prompt, sampler, steps,
-        cfg_scale, denoising_strength, batch_size, guidance_start, guidance_end, control_mode, x=64, y=64
+        cfg_scale, denoising_strength, batch_size, guidance_start, guidance_end, control_mode, lora_add_detail,
+        lora_add_detail_value, lora_add_details, lora_add_details_value, x=64, y=64
 ):
+    if lora_add_detail:
+        prompt += f" <lora:add_detail:{lora_add_detail_value}>"
+    if lora_add_details:
+        prompt += f" <lora:more_details:{lora_add_details_value}>"
+
     payload = {
         "prompt": prompt,
         "negative_prompt": negative_prompt,
@@ -372,77 +378,91 @@ def pose_preview(img, type):
 
 def canny_generate(
         img, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size_cn,
-        guidance_start, guidance_end, control_mode, x, y
+        guidance_start, guidance_end, control_mode, lora_add_detail, lora_add_detail_value, lora_add_details,
+        lora_add_details_value, x, y
 ):
 
     return controlnet_generate(
         "canny", get_model_controlnet("canny"), img, model, vae_name, prompt, negative_prompt,
-        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode, x, y
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode,
+        lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value, x, y
     )
 
 
 def depth_generate(
         img, depth_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
-        batch_size_cn, guidance_start, guidance_end, control_mode, x, y
+        batch_size_cn, guidance_start, guidance_end, control_mode, lora_add_detail, lora_add_detail_value,
+        lora_add_details, lora_add_details_value, x, y
 ):
 
     return controlnet_generate(
         depth_type, get_model_controlnet("depth"), img, model, vae_name, prompt, negative_prompt,
-        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode, x, y
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode,
+        lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value, x, y
     )
 
 
 def normal_generate(
         img, depth_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
-        batch_size_cn, guidance_start, guidance_end, control_mode, x
+        batch_size_cn, guidance_start, guidance_end, control_mode, lora_add_detail, lora_add_detail_value,
+        lora_add_details, lora_add_details_value, x
 ):
 
     return controlnet_generate(
-        depth_type, get_model_controlnet("normal"), img, model, vae_name, prompt, negative_prompt,
-        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode, x
+        depth_type, get_model_controlnet("normal"), img, model, vae_name, prompt, negative_prompt, sampler, steps,
+        cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode,
+        lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value, x
     )
 
 
 def pose_generate(
         img, depth_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
-        batch_size_cn, guidance_start, guidance_end, control_mode, x
+        batch_size_cn, guidance_start, guidance_end, control_mode, lora_add_detail, lora_add_detail_value,
+        lora_add_details, lora_add_details_value, x
 ):
 
     return controlnet_generate(
         depth_type, get_model_controlnet("pose"), img, model, vae_name, prompt, negative_prompt,
-        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode, x
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode,
+        lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value, x
     )
 
 
 def line_generate(
         img, depth_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
-        batch_size_cn, guidance_start, guidance_end, control_mode
+        batch_size_cn, guidance_start, guidance_end, control_mode, lora_add_detail, lora_add_detail_value,
+        lora_add_details, lora_add_details_value
 ):
     cn_name = get_model_controlnet("lineart_anime") if "anime" in depth_type else get_model_controlnet("lineart")
 
     return controlnet_generate(
         depth_type, cn_name, img, model, vae_name, prompt, negative_prompt,
-        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode,
+        lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
     )
 
 
 def shuffle_generate(
         img, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
-        batch_size_cn, guidance_start, guidance_end, control_mode
+        batch_size_cn, guidance_start, guidance_end, control_mode, lora_add_detail, lora_add_detail_value,
+        lora_add_details, lora_add_details_value
 ):
     return controlnet_generate(
         "shuffle", get_model_controlnet("shuffle"), img, model, vae_name, prompt, negative_prompt,
-        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode,
+        lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
     )
 
 
 def reference_generate(
         img, reference_type, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength,
-        batch_size_cn, guidance_start, guidance_end, control_mode
+        batch_size_cn, guidance_start, guidance_end, control_mode, lora_add_detail, lora_add_detail_value,
+        lora_add_details, lora_add_details_value
 ):
     return controlnet_generate(
         reference_type, "", img, model, vae_name, prompt, negative_prompt,
-        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode
+        sampler, steps, cfg_scale, denoising_strength, batch_size_cn, guidance_start, guidance_end, control_mode,
+        lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
     )
 
 

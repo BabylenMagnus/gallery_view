@@ -291,6 +291,18 @@ with gr.Blocks() as demo:
                     )
                     batch_size_cn = gr.Number(label="batch size", value=1)
 
+                    with gr.Row():
+                        lora_add_detail = gr.Checkbox(label="add detail")
+                        lora_add_detail_value = gr.Slider(
+                            minimum=-1, maximum=2, value=1, label="Lora add detail", show_label=True
+                        )
+                    with gr.Row():
+                        lora_add_details = gr.Checkbox(label="add detail #2")
+                        lora_add_details_value = gr.Slider(
+                            minimum=-0.5, maximum=1.5, value=1, label="Lora add detail", show_label=True
+                        )
+
+
         with gr.TabItem("hide"):
             image_orig = gr.Image(height=800, show_download_button=True)
             original_img = gr.Image(show_download_button=False)
@@ -409,7 +421,8 @@ with gr.Blocks() as demo:
         [
             canny_input_img, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn, cfg_scale_cn,
             denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, canny_low_threshold, canny_high_threshold
+            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value,
+            canny_low_threshold, canny_high_threshold
         ],
         [canny_out_img, canny_preview_img]
     )
@@ -419,17 +432,19 @@ with gr.Blocks() as demo:
         [
             depth_input_img, depth_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
             cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, depth_near, depth_back
+            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value,
+            depth_near, depth_back
         ],
         [depth_out_img, depth_preview_img]
     )
 
     normal_push.click(
-        depth_generate,
+        normal_generate,
         [
             normal_input_img, normal_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
             cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, normal_threshold
+            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value,
+            normal_threshold
         ],
         [normal_out_img, normal_preview_img]
     )
@@ -439,7 +454,7 @@ with gr.Blocks() as demo:
         [
             pose_input_img, pose_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
             cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode
+            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
         ],
         [pose_out_img, pose_preview_img]
     )
@@ -449,7 +464,7 @@ with gr.Blocks() as demo:
         [
             line_input_img, line_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
             cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode
+            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
         ],
         [line_out_img, line_preview_img]
     )
@@ -459,7 +474,7 @@ with gr.Blocks() as demo:
         [
             shuffle_input_img, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
             cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode
+            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
         ],
         [shuffle_out_img, test_img]
     )
@@ -469,7 +484,7 @@ with gr.Blocks() as demo:
         [
             reference_input_img, reference_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn,
             steps_cn, cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode
+            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
         ],
         [reference_out_img, test_img]
     )
