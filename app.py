@@ -294,14 +294,35 @@ with gr.Blocks() as demo:
                     with gr.Row():
                         lora_add_detail = gr.Checkbox(label="add detail")
                         lora_add_detail_value = gr.Slider(
-                            minimum=-1, maximum=2, value=1, label="Lora add detail", show_label=True
+                            minimum=-1, maximum=2, value=1, show_label=False
                         )
                     with gr.Row():
                         lora_add_details = gr.Checkbox(label="add detail #2")
                         lora_add_details_value = gr.Slider(
-                            minimum=-0.5, maximum=1.5, value=1, label="Lora add detail", show_label=True
+                            minimum=-0.5, maximum=1.5, value=1, show_label=False
                         )
-
+                    with gr.Row():
+                        lora_blindbox = gr.Checkbox(label="3DMM")
+                    with gr.Row():
+                        lora_eyes_gen = gr.Checkbox(label="Eyes gen")
+                        lora_eyes_gen_value = gr.Slider(
+                            minimum=0.1, maximum=.5, value=0.4, show_label=False
+                        )
+                    with gr.Row():
+                        lora_polyhedron_fem = gr.Checkbox(label="Eyes gen female")
+                        lora_polyhedron_fem_value = gr.Slider(
+                            minimum=0.1, maximum=.5, value=0.4, show_label=False
+                        )
+                    with gr.Row():
+                        lora_polyhedron_man = gr.Checkbox(label="Eyes gen man")
+                        lora_polyhedron_man_value = gr.Slider(
+                            minimum=0.1, maximum=.5, value=0.4, show_label=False
+                        )
+                    with gr.Row():
+                        lora_beautiful_detailed = gr.Checkbox(label="Beautiful Eyes")
+                        lora_beautiful_detailed_value = gr.Slider(
+                            minimum=0.1, maximum=1, value=0.5, show_label=False
+                        )
 
         with gr.TabItem("hide"):
             image_orig = gr.Image(height=800, show_download_button=True)
@@ -420,9 +441,11 @@ with gr.Blocks() as demo:
         canny_generate,
         [
             canny_input_img, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn, cfg_scale_cn,
-            denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value,
-            canny_low_threshold, canny_high_threshold
+            denoising_strength_cn, batch_size_cn, guidance_start, guidance_end, control_mode, lora_add_detail,
+            lora_add_detail_value, lora_add_details, lora_add_details_value, lora_blindbox, lora_eyes_gen,
+            lora_eyes_gen_value, lora_polyhedron_fem, lora_polyhedron_fem_value,  lora_polyhedron_man,
+            lora_polyhedron_man_value, lora_beautiful_detailed, lora_beautiful_detailed_value, canny_low_threshold,
+            canny_high_threshold
         ],
         [canny_out_img, canny_preview_img]
     )
@@ -431,9 +454,10 @@ with gr.Blocks() as demo:
         depth_generate,
         [
             depth_input_img, depth_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
-            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value,
-            depth_near, depth_back
+            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end, control_mode,
+            lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value, lora_blindbox,
+            lora_eyes_gen, lora_eyes_gen_value, lora_polyhedron_fem, lora_polyhedron_fem_value, lora_polyhedron_man,
+            lora_polyhedron_man_value, lora_beautiful_detailed, lora_beautiful_detailed_value, depth_near, depth_back
         ],
         [depth_out_img, depth_preview_img]
     )
@@ -442,9 +466,10 @@ with gr.Blocks() as demo:
         normal_generate,
         [
             normal_input_img, normal_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
-            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value,
-            normal_threshold
+            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end, control_mode,
+            lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value, lora_blindbox,
+            lora_eyes_gen, lora_eyes_gen_value, lora_polyhedron_fem, lora_polyhedron_fem_value, lora_polyhedron_man,
+            lora_polyhedron_man_value, lora_beautiful_detailed, lora_beautiful_detailed_value, normal_threshold
         ],
         [normal_out_img, normal_preview_img]
     )
@@ -453,8 +478,10 @@ with gr.Blocks() as demo:
         pose_generate,
         [
             pose_input_img, pose_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
-            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
+            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end, control_mode,
+            lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value, lora_blindbox,
+            lora_eyes_gen, lora_eyes_gen_value, lora_polyhedron_fem, lora_polyhedron_fem_value,
+            lora_polyhedron_man, lora_polyhedron_man_value, lora_beautiful_detailed, lora_beautiful_detailed_value
         ],
         [pose_out_img, pose_preview_img]
     )
@@ -463,8 +490,10 @@ with gr.Blocks() as demo:
         line_generate,
         [
             line_input_img, line_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
-            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
+            cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end, control_mode,
+            lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value, lora_blindbox,
+            lora_eyes_gen, lora_eyes_gen_value, lora_polyhedron_fem, lora_polyhedron_fem_value,  lora_polyhedron_man,
+            lora_polyhedron_man_value, lora_beautiful_detailed, lora_beautiful_detailed_value
         ],
         [line_out_img, line_preview_img]
     )
@@ -474,7 +503,9 @@ with gr.Blocks() as demo:
         [
             shuffle_input_img, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn, steps_cn,
             cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
+            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value,
+            lora_blindbox, lora_eyes_gen, lora_eyes_gen_value, lora_polyhedron_fem, lora_polyhedron_fem_value,
+            lora_polyhedron_man, lora_polyhedron_man_value, lora_beautiful_detailed, lora_beautiful_detailed_value
         ],
         [shuffle_out_img, test_img]
     )
@@ -484,7 +515,9 @@ with gr.Blocks() as demo:
         [
             reference_input_img, reference_type, model_name, vae_name, prompt_cn, negative_prompt_cn, sampler_cn,
             steps_cn, cfg_scale_cn, denoising_strength_cn, batch_size_cn, guidance_start, guidance_end,
-            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value
+            control_mode, lora_add_detail, lora_add_detail_value, lora_add_details, lora_add_details_value,
+            lora_blindbox, lora_eyes_gen, lora_eyes_gen_value, lora_polyhedron_fem, lora_polyhedron_fem_value,
+            lora_polyhedron_man, lora_polyhedron_man_value, lora_beautiful_detailed, lora_beautiful_detailed_value
         ],
         [reference_out_img, test_img]
     )
