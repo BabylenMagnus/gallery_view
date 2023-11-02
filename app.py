@@ -1,4 +1,37 @@
+import glob
+import os
+
 from utils import *
+
+
+RESULT_DIR = r"IMGS_1_11"
+RESULTS = os.listdir(RESULT_DIR)
+OUT_DIR = r"WITHOUT_TEXT"
+
+
+def get_img(num):
+    return Image.open(os.path.join(RESULT_DIR, RESULTS[int(num)])).convert("RGB")
+
+
+def save_imgs(imgs, page):
+    for i, img in enumerate(imgs):
+        img = Image.open(img["name"])
+        img.save(os.path.join(
+            OUT_DIR, f"{RESULTS[int(page)]}_page{len(glob.glob(OUT_DIR + f'/{RESULTS[int(page)]}_page*'))}.png"
+        ))
+
+
+def change_dir(num, button=None):
+    if button is None:
+        img = get_img(num)
+        return img, num, ocr_detect(np.array(img))
+    if button == "+" and num < len(RESULTS):
+        num += 1
+    elif num > 0:
+        num -= 1
+    print(RESULTS[int(num)])
+    img = get_img(num)
+    return img, num, img, *ocr_detect(np.array(img))
 
 
 with gr.Blocks() as demo:
@@ -50,6 +83,8 @@ with gr.Blocks() as demo:
                     batch_size_rt = gr.Number(label="batch size", value=1)
 
                     remove_text_but = gr.Button("Remove Text", variant="primary")
+
+                    save_images_remove_text = gr.Button("Save", variant="primary")
 
         with gr.TabItem("Add Text"):
             with gr.Row():
@@ -123,6 +158,7 @@ with gr.Blocks() as demo:
 
                     outpaint_image = gr.Button("Дорисовать")
                     outpaint_with_value = gr.Button("Дорисовать со своими значениями")
+                    save_images_upgrade = gr.Button("Save", variant="primary")
 
         with gr.TabItem("Upgrade"):
             with gr.Row():
@@ -324,10 +360,45 @@ with gr.Blocks() as demo:
                             minimum=0.1, maximum=1, value=0.5, show_label=False
                         )
 
+        with gr.TabItem("Choose"):
+            with gr.Row():
+                prev_page = gr.Button(
+                    "prev", variant="primary"
+                )
+                page = gr.Number(value=0, minimum=0, maximum=len(RESULTS), show_label=False)
+                next_page = gr.Button(
+                    "next", variant="primary"
+                )
+            choose_show_img = gr.Image(show_download_button=False)
+
         with gr.TabItem("hide"):
             image_orig = gr.Image(height=800, show_download_button=True)
             original_img = gr.Image(show_download_button=False)
             test_img = gr.Image(show_download_button=False)
+
+    prev_page.click(
+        lambda page: change_dir(page, "-"),
+        [page],
+        [choose_show_img, page, outpainted_image, texted_img, image_orig, bboxes, ocr_res, map_bboxes]
+    )
+
+    next_page.click(
+        lambda page: change_dir(page, "+"),
+        [page],
+        [choose_show_img, page, outpainted_image, texted_img, image_orig, bboxes, ocr_res, map_bboxes]
+    )
+
+    save_images_remove_text.click(
+        save_imgs,
+        [without_text, page],
+        []
+    )
+
+    save_images_upgrade.click(
+        save_imgs,
+        [result_image, page],
+        []
+    )
 
     texted_img.upload(
         ocr_detect,
@@ -523,4 +594,4 @@ with gr.Blocks() as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch(share=True, server_name="0.0.0.0", server_port=5000)
+    demo.launch(share=True, server_name="0.0.0.0", server_port=7000)

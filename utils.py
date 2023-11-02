@@ -95,6 +95,7 @@ def remove_text(
     for bb, i in zip(bboxes, map_bboxes):
         if i:
             b.append(bb)
+    print(b)
 
     mask = Image.new("L", (img.shape[1], img.shape[0]))
     draw = ImageDraw.Draw(mask)

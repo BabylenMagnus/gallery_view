@@ -12,17 +12,17 @@ import json
 # RESULT_PATH = "/root/inpaint_api/results/"
 # ORIG_IMG = "/root/new/"
 
-RESULT_PATH = "/home/jjjj/Pictures/inpaint_api/results/"
-ORIG_IMG = "/home/jjjj/Documents/new/"
-
-BBOX_PATH = "/root/without/bboxes.json"
-# BBOX_PATH = "/home/jjjj/Pictures/without/bboxes.json"
-
-FONT_PATH = "fonts/"
-
-
-with open(BBOX_PATH, "r") as t:
-    BBOXES = json.load(t)
+RESULT_PATH = "/root/results/gallery_view/results"
+ORIG_IMG = "/root/results/gallery_view/results"
+#
+# BBOX_PATH = "/root/without/bboxes.json"
+# # BBOX_PATH = "/home/jjjj/Pictures/without/bboxes.json"
+#
+# FONT_PATH = "fonts/"
+#
+#
+# with open(BBOX_PATH, "r") as t:
+#     BBOXES = json.load(t)
 
 
 save_path = "saves/"
@@ -33,8 +33,8 @@ RESULT_DIRS = [i for i in os.listdir(RESULT_PATH) if os.path.isdir(os.path.join(
 
 
 def get_imgs(num):
-    return ([Image.open(os.path.join(ORIG_IMG, RESULT_DIRS[int(num)] + ".jpg"))] +
-            [Image.open(i) for i in glob.glob(RESULT_PATH + RESULT_DIRS[int(num)] + "/*.jpg")])
+    return ([Image.open(os.path.join(ORIG_IMG, RESULT_DIRS[int(num)] + ".png"))] +
+            [Image.open(i) for i in glob.glob(RESULT_PATH + RESULT_DIRS[int(num)] + "/*.png")])
 
 
 def change_dir(num, button=None):
@@ -49,52 +49,53 @@ def change_dir(num, button=None):
 
 
 def select_image(evt: gr.SelectData, gallery, num):
-    bb = BBOXES[RESULT_DIRS[int(num)]].copy()
-    bb["height"] = [b - t for b, t in zip(bb["bottom"], bb["top"])]
-    del bb["right"]
-    del bb["left"]
-    del bb["bottom"]
-    bb["text"] = [i.upper() for i in bb["text"]]
-    bb["up_font"] = [1 for _ in bb["text"][:-1]] + [0]
+    # bb = BBOXES[RESULT_DIRS[int(num)]].copy()
+    # bb["height"] = [b - t for b, t in zip(bb["bottom"], bb["top"])]
+    # del bb["right"]
+    # del bb["left"]
+    # del bb["bottom"]
+    # bb["text"] = [i.upper() for i in bb["text"]]
+    # bb["up_font"] = [1 for _ in bb["text"][:-1]] + [0]
 
     return (
         Image.open(os.path.join(ORIG_IMG, RESULT_DIRS[int(num)] + ".jpg")),
         Image.open(gallery[evt.index]['name']),
-        Image.open(gallery[evt.index]['name']), pd.DataFrame(bb))
+        Image.open(gallery[evt.index]['name'])
+    )
 
 
-def add_text_font(img, result, up_font, down_font):
-    img = Image.fromarray(img)
-
-    for j in range(len(result)):
-        j = result.loc[j]
-
-        image = Image.new('RGB', img.size, "white")
-        draw = ImageDraw.Draw(image)
-        font = ImageFont.truetype(
-            os.path.join(FONT_PATH, up_font) if j["up_font"]
-            else os.path.join(FONT_PATH, down_font),
-            int(j["height"])
-        )
-
-        _, _, w, h = draw.textbbox(
-            (0, 0), j["text"], font=font
-        )
-
-        draw = ImageDraw.Draw(img)
-        draw.text(((img.size[0] - w) / 2, int(j["top"])), j["text"], font=font, fill="white")
-
-        # image = Image.new('L', (int(w * 2), int(h * 2)), "white")
-        #
-        # draw = ImageDraw.Draw(image)
-        # myFont = ImageFont.truetype("/home/jjjj/Downloads/Blacknorthdemo-mLE25.otf", size=h)
-        # _, _, w_, h_ = draw.textbbox((0, 0), j["name"], font=myFont)
-        # draw.text((0, 0), j["name"], font=myFont, fill="black")
-        # text_ = np.array(image)[:h_, :w_]
-        # text_ = Image.fromarray(text_).resize((int(w), int(h)), reducing_gap=3.0)
-        # img.paste(text_, (j["left"], j["bottom"]), mask=Image.fromarray(255 - np.array(text_)))
-
-    return img
+# def add_text_font(img, result, up_font, down_font):
+#     img = Image.fromarray(img)
+#
+#     for j in range(len(result)):
+#         j = result.loc[j]
+#
+#         image = Image.new('RGB', img.size, "white")
+#         draw = ImageDraw.Draw(image)
+#         # font = ImageFont.truetype(
+#         #     os.path.join(FONT_PATH, up_font) if j["up_font"]
+#         #     else os.path.join(FONT_PATH, down_font),
+#         #     int(j["height"])
+#         # )
+#
+#         _, _, w, h = draw.textbbox(
+#             (0, 0), j["text"], font=font
+#         )
+#
+#         draw = ImageDraw.Draw(img)
+#         draw.text(((img.size[0] - w) / 2, int(j["top"])), j["text"], font=font, fill="white")
+#
+#         # image = Image.new('L', (int(w * 2), int(h * 2)), "white")
+#         #
+#         # draw = ImageDraw.Draw(image)
+#         # myFont = ImageFont.truetype("/home/jjjj/Downloads/Blacknorthdemo-mLE25.otf", size=h)
+#         # _, _, w_, h_ = draw.textbbox((0, 0), j["name"], font=myFont)
+#         # draw.text((0, 0), j["name"], font=myFont, fill="black")
+#         # text_ = np.array(image)[:h_, :w_]
+#         # text_ = Image.fromarray(text_).resize((int(w), int(h)), reducing_gap=3.0)
+#         # img.paste(text_, (j["left"], j["bottom"]), mask=Image.fromarray(255 - np.array(text_)))
+#
+#     return img
 
 
 def load_img_to_array(img_p):
@@ -103,45 +104,45 @@ def load_img_to_array(img_p):
     return np.array(img)
 
 
-def add_text(img, page, thickness, threshold):
-    orig_img = load_img_to_array(os.path.join(ORIG_IMG, RESULT_DIRS[int(page)] + ".jpg"))
-
-    a = Image.fromarray(orig_img).convert("L")
-    a = np.array(a)
-    img = np.array(Image.fromarray(img.copy()).resize((a.shape[1], a.shape[0])))
-
-    blured = cv2.GaussianBlur(a, (1, 1), cv2.BORDER_DEFAULT)
-
-    mask = np.zeros([orig_img.shape[0], orig_img.shape[1]], dtype=np.uint8)
-    mask[310:][blured[310:] > threshold] = 255
-
-    cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-
-    for c in cnts:
-        cv2.drawContours(mask, [c], -1, 255, thickness=int(thickness))
-
-    mask = np.stack([mask, mask, mask], axis=2)
-
-    img[mask > 1] = orig_img[mask > 1]
-
-    with open(log_path, "r") as t:
-        data = t.read().split("\n")
-
-    data.append(RESULT_DIRS[int(page)])
-    data = list(set(data))
-
-    with open(log_path, "w") as t:
-        t.write("\n".join(data))
-
-    return img
+# def add_text(img, page, thickness, threshold):
+#     orig_img = load_img_to_array(os.path.join(ORIG_IMG, RESULT_DIRS[int(page)] + ".jpg"))
+#
+#     a = Image.fromarray(orig_img).convert("L")
+#     a = np.array(a)
+#     img = np.array(Image.fromarray(img.copy()).resize((a.shape[1], a.shape[0])))
+#
+#     blured = cv2.GaussianBlur(a, (1, 1), cv2.BORDER_DEFAULT)
+#
+#     mask = np.zeros([orig_img.shape[0], orig_img.shape[1]], dtype=np.uint8)
+#     mask[310:][blured[310:] > threshold] = 255
+#
+#     cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+#
+#     for c in cnts:
+#         cv2.drawContours(mask, [c], -1, 255, thickness=int(thickness))
+#
+#     mask = np.stack([mask, mask, mask], axis=2)
+#
+#     img[mask > 1] = orig_img[mask > 1]
+#
+#     with open(log_path, "r") as t:
+#         data = t.read().split("\n")
+#
+#     data.append(RESULT_DIRS[int(page)])
+#     data = list(set(data))
+#
+#     with open(log_path, "w") as t:
+#         t.write("\n".join(data))
+#
+#     return img
 
 
 def save_img(img, page):
     img = Image.fromarray(img)
     name = RESULT_DIRS[int(page)]
     print("save", name)
-    img.save(save_path + name + str(len(glob.glob(save_path + name + "*.png"))) + ".png")
+    img.save(save_path + name + "__" + str(len(glob.glob(save_path + name + "*"))) + ".png")
 
 
 with gr.Blocks() as demo:
@@ -164,28 +165,28 @@ with gr.Blocks() as demo:
             with gr.Row():
                 choose_img = gr.Button("выбрать", variant="primary")
 
-        with gr.TabItem("Add text"):
+        with gr.TabItem("Save"):
             with gr.Row():
                 real_img = gr.Image(height=800, show_download_button=True)
                 image = gr.Image(height=800, show_download_button=True)
                 with gr.Column():
-                    result = gr.Dataframe(
-                        headers=["text", "top", "left", "height"],
-                        datatype=["str", "number", "number", "number"]
-                    )
-
-                    up_font = gr.Dropdown(
-                        os.listdir(FONT_PATH), label="Верхний шрифт", value=os.listdir(FONT_PATH)[0]
-                    )
-                    down_font = gr.Dropdown(
-                        os.listdir(FONT_PATH), label="Down шрифт", value=os.listdir(FONT_PATH)[1]
-                    )
-
-                    threshold = gr.Number(value=195, minimum=150, maximum=250, label="threshold")
-                    thickness = gr.Number(value=3, minimum=0, maximum=15, label="thickness")
-
-                    add_text_to_image = gr.Button("add text", variant="primary")
-                    add_text_from_font = gr.Button("add text own font", variant="primary")
+                    # result = gr.Dataframe(
+                    #     headers=["text", "top", "left", "height"],
+                    #     datatype=["str", "number", "number", "number"]
+                    # )
+                    #
+                    # up_font = gr.Dropdown(
+                    #     os.listdir(FONT_PATH), label="Верхний шрифт", value=os.listdir(FONT_PATH)[0]
+                    # )
+                    # down_font = gr.Dropdown(
+                    #     os.listdir(FONT_PATH), label="Down шрифт", value=os.listdir(FONT_PATH)[1]
+                    # )
+                    #
+                    # threshold = gr.Number(value=195, minimum=150, maximum=250, label="threshold")
+                    # thickness = gr.Number(value=3, minimum=0, maximum=15, label="thickness")
+                    #
+                    # add_text_to_image = gr.Button("add text", variant="primary")
+                    # add_text_from_font = gr.Button("add text own font", variant="primary")
                     save_button = gr.Button("Save image", variant="primary")
 
         with gr.TabItem("Hide"):
@@ -212,14 +213,14 @@ with gr.Blocks() as demo:
     gallery.select(
         select_image,
         [gallery, page],
-        [real_img, image_orig, image, result]
+        [real_img, image_orig, image]
     )
 
-    add_text_to_image.click(
-        add_text,
-        [image_orig, page, thickness, threshold],
-        [image]
-    )
+    # add_text_to_image.click(
+    #     add_text,
+    #     [image_orig, page, thickness, threshold],
+    #     [image]
+    # )
 
     save_button.click(
         save_img,
@@ -227,11 +228,11 @@ with gr.Blocks() as demo:
         []
     )
 
-    add_text_from_font.click(
-        add_text_font,
-        [image_orig, result, up_font, down_font],
-        [image]
-    )
+    # add_text_from_font.click(
+    #     add_text_font,
+    #     [image_orig, result, up_font, down_font],
+    #     [image]
+    # )
 
 if __name__ == "__main__":
     demo.launch(share=True, server_name="0.0.0.0", server_port=5010)
