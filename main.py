@@ -12,8 +12,8 @@ import json
 # RESULT_PATH = "/root/inpaint_api/results/"
 # ORIG_IMG = "/root/new/"
 
-RESULT_PATH = "/root/results/gallery_view/results"
-ORIG_IMG = "/root/results/gallery_view/results"
+RESULT_PATH = "/root/gallery_view/results/"
+ORIG_IMG = "/root/gallery_view/results/"
 #
 # BBOX_PATH = "/root/without/bboxes.json"
 # # BBOX_PATH = "/home/jjjj/Pictures/without/bboxes.json"
@@ -33,8 +33,7 @@ RESULT_DIRS = [i for i in os.listdir(RESULT_PATH) if os.path.isdir(os.path.join(
 
 
 def get_imgs(num):
-    return ([Image.open(os.path.join(ORIG_IMG, RESULT_DIRS[int(num)] + ".png"))] +
-            [Image.open(i) for i in glob.glob(RESULT_PATH + RESULT_DIRS[int(num)] + "/*.png")])
+    return [Image.open(i) for i in glob.glob(RESULT_PATH + RESULT_DIRS[int(num)] + "/*.png")]
 
 
 def change_dir(num, button=None):
