@@ -57,7 +57,6 @@ def select_image(evt: gr.SelectData, gallery, num):
     # bb["up_font"] = [1 for _ in bb["text"][:-1]] + [0]
 
     return (
-        Image.open(os.path.join(ORIG_IMG, RESULT_DIRS[int(num)] + ".jpg")),
         Image.open(gallery[evt.index]['name']),
         Image.open(gallery[evt.index]['name'])
     )
@@ -166,7 +165,7 @@ with gr.Blocks() as demo:
 
         with gr.TabItem("Save"):
             with gr.Row():
-                real_img = gr.Image(height=800, show_download_button=True)
+                # real_img = gr.Image(height=800, show_download_button=True)
                 image = gr.Image(height=800, show_download_button=True)
                 with gr.Column():
                     # result = gr.Dataframe(
@@ -212,7 +211,7 @@ with gr.Blocks() as demo:
     gallery.select(
         select_image,
         [gallery, page],
-        [real_img, image_orig, image]
+        [image_orig, image]
     )
 
     # add_text_to_image.click(
