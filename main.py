@@ -161,9 +161,11 @@ with gr.Blocks() as demo:
                 label="Generated images", show_label=False, elem_id="gallery", columns=9, height=850
             )
             with gr.Row():
-                choose_img = gr.Button("выбрать", variant="primary")
+                save_button = gr.Button("Save image", variant="primary")
 
-        with gr.TabItem("Save"):
+                # choose_img = gr.Button("выбрать", variant="primary")
+
+        with gr.TabItem("Hide 2"):
             with gr.Row():
                 # real_img = gr.Image(height=800, show_download_button=True)
                 image = gr.Image(height=800, show_download_button=True)
@@ -185,7 +187,8 @@ with gr.Blocks() as demo:
                     #
                     # add_text_to_image = gr.Button("add text", variant="primary")
                     # add_text_from_font = gr.Button("add text own font", variant="primary")
-                    save_button = gr.Button("Save image", variant="primary")
+                    # save_button = gr.Button("Save image", variant="primary")
+                    pass
 
         with gr.TabItem("Hide"):
             image_orig = gr.Image(height=800, show_download_button=True)
@@ -222,7 +225,7 @@ with gr.Blocks() as demo:
 
     save_button.click(
         save_img,
-        [image, page],
+        [image_orig, page],
         []
     )
 
