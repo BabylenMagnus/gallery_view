@@ -138,6 +138,32 @@ def to_b64(img):
     return b64_string
 
 
+def generate_image_txt2img(
+        model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size=1
+):
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "steps": steps,
+        "batch_size": batch_size,
+        "override_settings": {
+            "sd_model_checkpoint": model,
+            "sd_vae": vae_name
+        },
+        "width": 408,
+        "height": 544,
+        "sampler_index": sampler,
+        "cfg_scale": cfg_scale,
+        "denoising_strength": denoising_strength
+    }
+
+    response = requests.post(f'{A111_url}/sdapi/v1/txt2img', json=payload)
+    imgs = [Image.open(io.BytesIO(base64.b64decode(i))) for i in response.json()["images"]]
+    log_img(imgs)
+    return imgs
+
+
+
 def generate_image(
         img, mask, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size=1
 ):

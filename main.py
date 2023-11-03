@@ -8,132 +8,123 @@ from PIL import Image, ImageDraw, ImageFont
 import glob
 import json
 
+import random
 
-# RESULT_PATH = "/root/inpaint_api/results/"
-# ORIG_IMG = "/root/new/"
 
-RESULT_PATH = "/root/gallery_view/results/"
+RESULT_PATH = "log"
 ORIG_IMG = "/root/gallery_view/results/"
-#
-# BBOX_PATH = "/root/without/bboxes.json"
-# # BBOX_PATH = "/home/jjjj/Pictures/without/bboxes.json"
-#
-# FONT_PATH = "fonts/"
-#
-#
-# with open(BBOX_PATH, "r") as t:
-#     BBOXES = json.load(t)
+
+INPUT_EXCEL = f"/home/jjjj/Downloads/Картинки .xlsx"
+
+xl = pd.ExcelFile(INPUT_EXCEL)
+data = xl.parse(xl.sheet_names[0])
+SLOTS_NAMES = list(set(list(data['name'])))
 
 
 save_path = "saves/"
 log_path = "log.txt"
 
 
-RESULT_DIRS = [i for i in os.listdir(RESULT_PATH) if os.path.isdir(os.path.join(RESULT_PATH, i))]
+def get_imgs():
+    pathes = random.choices(glob.glob(RESULT_PATH + "/*.png"), k=30)
 
-
-def get_imgs(num):
-    return [Image.open(i) for i in glob.glob(RESULT_PATH + RESULT_DIRS[int(num)] + "/*.png")]
+    return [Image.open(i) for i in pathes], pathes
 
 
 def change_dir(num, button=None):
     print(num)
     if button is None:
-        return get_imgs(num), "# " + RESULT_DIRS[int(num)]
-    if button == "+" and num < len(RESULT_DIRS):
+        return num, SLOTS_NAMES[int(num)]
+    if button == "+" and num < len(SLOTS_NAMES):
         num += 1
     elif num > 0:
         num -= 1
-    return get_imgs(num), num, "# " + RESULT_DIRS[int(num)]
+    return num, SLOTS_NAMES[int(num)]
 
 
-def select_image(evt: gr.SelectData, gallery, num):
-    # bb = BBOXES[RESULT_DIRS[int(num)]].copy()
-    # bb["height"] = [b - t for b, t in zip(bb["bottom"], bb["top"])]
-    # del bb["right"]
-    # del bb["left"]
-    # del bb["bottom"]
-    # bb["text"] = [i.upper() for i in bb["text"]]
-    # bb["up_font"] = [1 for _ in bb["text"][:-1]] + [0]
+def split_text(text):
+    THRESH = 8
+    THRESH_2 = 7
 
-    return (
-        Image.open(gallery[evt.index]['name']),
-        Image.open(gallery[evt.index]['name'])
-    )
+    new_text = []
+
+    if text[0] == "THE":
+        del text[0]
+        text[0] = "THE " + text[0]
+
+    if "VS" in text:
+        text = " ".join(text)
+        text = text.split(" VS ")
+        return [[text[0]], ["VS"], [text[1]]]
+
+    if len(text) <= 3:
+        if len(" ".join(text)) < THRESH_2:
+            new_text = [[" ".join(text)]]
+        else:
+            new_text = [text[:1], text[1:]]
+    else:
+        a = ""
+        for i in text:
+            if len(a) < THRESH:
+                a += " " + i
+            else:
+                new_text.append([a.strip()])
+                a = i
+        new_text.append([a.strip()])
+    return new_text
 
 
-# def add_text_font(img, result, up_font, down_font):
-#     img = Image.fromarray(img)
-#
-#     for j in range(len(result)):
-#         j = result.loc[j]
-#
-#         image = Image.new('RGB', img.size, "white")
-#         draw = ImageDraw.Draw(image)
-#         # font = ImageFont.truetype(
-#         #     os.path.join(FONT_PATH, up_font) if j["up_font"]
-#         #     else os.path.join(FONT_PATH, down_font),
-#         #     int(j["height"])
-#         # )
-#
-#         _, _, w, h = draw.textbbox(
-#             (0, 0), j["text"], font=font
-#         )
-#
-#         draw = ImageDraw.Draw(img)
-#         draw.text(((img.size[0] - w) / 2, int(j["top"])), j["text"], font=font, fill="white")
-#
-#         # image = Image.new('L', (int(w * 2), int(h * 2)), "white")
-#         #
-#         # draw = ImageDraw.Draw(image)
-#         # myFont = ImageFont.truetype("/home/jjjj/Downloads/Blacknorthdemo-mLE25.otf", size=h)
-#         # _, _, w_, h_ = draw.textbbox((0, 0), j["name"], font=myFont)
-#         # draw.text((0, 0), j["name"], font=myFont, fill="black")
-#         # text_ = np.array(image)[:h_, :w_]
-#         # text_ = Image.fromarray(text_).resize((int(w), int(h)), reducing_gap=3.0)
-#         # img.paste(text_, (j["left"], j["bottom"]), mask=Image.fromarray(255 - np.array(text_)))
-#
-#     return img
+splits = {
+    1: [[340, 78]],
+    2: [[355, 56], [400, 68]],
+    3: [[310, 68], [370, 44], [420, 68]]
+}
+
+UP_FONT_PATH = "/home/jjjj/Documents/gallery_view/fonts/RubikWetPaint-Regular.ttf"
+
+FONT_PATH = "/home/jjjj/Documents/gallery_view/fonts/RedHatText-VariableFont_wght.ttf"
+
+TOP = 490
+tops = [310, 350, 350, 340]
+
+
+def select_image(evt: gr.SelectData, gallery, page):
+    text = split_text(SLOTS_NAMES[int(page)].split(" "))
+
+    img = Image.open(gallery[evt.index]['name'])
+    img = img.convert("RGB")
+
+    s = splits[len(text)]
+
+    top = tops[len(text)]
+
+    for t in text:
+        t = " ".join(t)
+        image = Image.new('RGB', img.size, "white")
+        draw = ImageDraw.Draw(image)
+
+        w = 1000
+        for f_size in [38, 42, 46, 48, 52, 56, 64, 72, 80, 98, 106, 112]:
+            font = ImageFont.truetype(UP_FONT_PATH, f_size)
+
+            _, _, w, h = draw.textbbox(
+                (0, 0), t, font=font
+            )
+            if w > 360 or h > (150 / len(text)):
+                draw = ImageDraw.Draw(img)
+                draw.text(
+                    ((img.size[0] - w) / 2, top), t, font=font, fill="white", stroke_width=1, stroke_fill="black"
+                )
+                top += h - 10
+                break
+
+    return img, evt.index
 
 
 def load_img_to_array(img_p):
     img = Image.open(img_p)
     img = img.convert("RGB")
     return np.array(img)
-
-
-# def add_text(img, page, thickness, threshold):
-#     orig_img = load_img_to_array(os.path.join(ORIG_IMG, RESULT_DIRS[int(page)] + ".jpg"))
-#
-#     a = Image.fromarray(orig_img).convert("L")
-#     a = np.array(a)
-#     img = np.array(Image.fromarray(img.copy()).resize((a.shape[1], a.shape[0])))
-#
-#     blured = cv2.GaussianBlur(a, (1, 1), cv2.BORDER_DEFAULT)
-#
-#     mask = np.zeros([orig_img.shape[0], orig_img.shape[1]], dtype=np.uint8)
-#     mask[310:][blured[310:] > threshold] = 255
-#
-#     cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-#     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-#
-#     for c in cnts:
-#         cv2.drawContours(mask, [c], -1, 255, thickness=int(thickness))
-#
-#     mask = np.stack([mask, mask, mask], axis=2)
-#
-#     img[mask > 1] = orig_img[mask > 1]
-#
-#     with open(log_path, "r") as t:
-#         data = t.read().split("\n")
-#
-#     data.append(RESULT_DIRS[int(page)])
-#     data = list(set(data))
-#
-#     with open(log_path, "w") as t:
-#         t.write("\n".join(data))
-#
-#     return img
 
 
 def save_img(img, page):
@@ -144,90 +135,117 @@ def save_img(img, page):
 
 
 with gr.Blocks() as demo:
+    pathes = gr.State(None)
+    text = gr.State(None)
+    index_path = gr.State(None)
+
     with gr.Tabs():
         with gr.TabItem("Choose Image"):
             with gr.Row():
-                prev_page = gr.Button(
-                    "prev", variant="primary"
+                gallery = gr.Gallery(
+                    object_fit="contain", label="Generated images",
+                    show_label=False, elem_id="gallery", columns=5, height=850
                 )
-                page = gr.Number(value=0, minimum=0, maximum=len(RESULT_DIRS), show_label=False)
-                next_page = gr.Button(
-                    "next", variant="primary"
-                )
-                dir_name = gr.Markdown(value="# " + RESULT_DIRS[int(page.value)])
 
-            gallery = gr.Gallery(
-                value=get_imgs(page.value), object_fit="contain",
-                label="Generated images", show_label=False, elem_id="gallery", columns=9, height=850
-            )
-            with gr.Row():
-                save_button = gr.Button("Save image", variant="primary")
+                with gr.Column():
+                    start = gr.Button("Start")
+                    with gr.Row():
+                        prev_page = gr.Button(
+                            "prev", variant="primary"
+                        )
+                        page = gr.Number(value=0, minimum=0, maximum=len(SLOTS_NAMES), show_label=False)
+                        next_page = gr.Button(
+                            "next", variant="primary"
+                        )
+
+                    image = gr.Image(height=544, width=408, show_download_button=False)
+                    save_button = gr.Button("Save image", variant="primary")
+
+            # with gr.Row():
+            #     prev_page = gr.Button(
+            #         "prev", variant="primary"
+            #     )
+            #     page = gr.Number(value=0, minimum=0, maximum=len(RESULT_DIRS), show_label=False)
+            #     next_page = gr.Button(
+            #         "next", variant="primary"
+            #     )
+            #     dir_name = gr.Markdown(value="# " + RESULT_DIRS[int(page.value)])
+            #
+            # with gr.Row():
+            #     save_button = gr.Button("Save image", variant="primary")
 
                 # choose_img = gr.Button("выбрать", variant="primary")
+    #
+    #     with gr.TabItem("Hide 2"):
+    #         with gr.Row():
+    #             # real_img = gr.Image(height=800, show_download_button=True)
+    #             image = gr.Image(height=800, show_download_button=True)
+    #             with gr.Column():
+    #                 # result = gr.Dataframe(
+    #                 #     headers=["text", "top", "left", "height"],
+    #                 #     datatype=["str", "number", "number", "number"]
+    #                 # )
+    #                 #
+    #                 # up_font = gr.Dropdown(
+    #                 #     os.listdir(FONT_PATH), label="Верхний шрифт", value=os.listdir(FONT_PATH)[0]
+    #                 # )
+    #                 # down_font = gr.Dropdown(
+    #                 #     os.listdir(FONT_PATH), label="Down шрифт", value=os.listdir(FONT_PATH)[1]
+    #                 # )
+    #                 #
+    #                 # threshold = gr.Number(value=195, minimum=150, maximum=250, label="threshold")
+    #                 # thickness = gr.Number(value=3, minimum=0, maximum=15, label="thickness")
+    #                 #
+    #                 # add_text_to_image = gr.Button("add text", variant="primary")
+    #                 # add_text_from_font = gr.Button("add text own font", variant="primary")
+    #                 # save_button = gr.Button("Save image", variant="primary")
+    #                 pass
+    #
+    #     with gr.TabItem("Hide"):
+    #         image_orig = gr.Image(height=800, show_download_button=True)
 
-        with gr.TabItem("Hide 2"):
-            with gr.Row():
-                # real_img = gr.Image(height=800, show_download_button=True)
-                image = gr.Image(height=800, show_download_button=True)
-                with gr.Column():
-                    # result = gr.Dataframe(
-                    #     headers=["text", "top", "left", "height"],
-                    #     datatype=["str", "number", "number", "number"]
-                    # )
-                    #
-                    # up_font = gr.Dropdown(
-                    #     os.listdir(FONT_PATH), label="Верхний шрифт", value=os.listdir(FONT_PATH)[0]
-                    # )
-                    # down_font = gr.Dropdown(
-                    #     os.listdir(FONT_PATH), label="Down шрифт", value=os.listdir(FONT_PATH)[1]
-                    # )
-                    #
-                    # threshold = gr.Number(value=195, minimum=150, maximum=250, label="threshold")
-                    # thickness = gr.Number(value=3, minimum=0, maximum=15, label="thickness")
-                    #
-                    # add_text_to_image = gr.Button("add text", variant="primary")
-                    # add_text_from_font = gr.Button("add text own font", variant="primary")
-                    # save_button = gr.Button("Save image", variant="primary")
-                    pass
-
-        with gr.TabItem("Hide"):
-            image_orig = gr.Image(height=800, show_download_button=True)
+    start.click(
+        get_imgs,
+        [],
+        [gallery, pathes]
+    )
 
     page.submit(
         change_dir,
         [page],
-        [gallery, dir_name]
+        [page, text]
     )
 
     prev_page.click(
         lambda page: change_dir(page, "-"),
         [page],
-        [gallery, page, dir_name]
+        [page, text]
     )
 
     next_page.click(
         lambda page: change_dir(page, "+"),
         [page],
-        [gallery, page, dir_name]
+        [page, text]
     )
 
     gallery.select(
         select_image,
         [gallery, page],
-        [image_orig, image]
+        [image, index_path]
     )
 
-    # add_text_to_image.click(
-    #     add_text,
-    #     [image_orig, page, thickness, threshold],
-    #     [image]
+    #
+    # # add_text_to_image.click(
+    # #     add_text,
+    # #     [image_orig, page, thickness, threshold],
+    # #     [image]
+    # # )
+    #
+    # save_button.click(
+    #     save_img,
+    #     [image_orig, page],
+    #     []
     # )
-
-    save_button.click(
-        save_img,
-        [image_orig, page],
-        []
-    )
 
     # add_text_from_font.click(
     #     add_text_font,
