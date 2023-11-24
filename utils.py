@@ -16,7 +16,7 @@ from uuid import uuid4
 
 
 eader = easyocr.Reader(['en'])
-A111_url = "http://127.0.0.1:7860"
+A111_url = "http://213.108.196.111:47595"
 BASE_NEGATIV_PROMPT = (
     "two straws, sketches, worst quality, low quality, normal quality, lowres, normal quality, freckles, ugly, bad, "
     "sketch, bad anatomy, out of view, cut off, ugly, deformed, mutated, skin spots, skin spots, acnes, skin blemishes,"
@@ -163,7 +163,6 @@ def generate_image_txt2img(
     return imgs
 
 
-
 def generate_image(
         img, mask, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size=1
 ):
@@ -184,6 +183,35 @@ def generate_image(
         },
         "width": img.shape[1],
         "height": img.shape[0],
+        "sampler_index": sampler,
+        "cfg_scale": cfg_scale,
+        "denoising_strength": denoising_strength
+    }
+
+    response = requests.post(f'{A111_url}/sdapi/v1/img2img', json=payload)
+    imgs = [Image.open(io.BytesIO(base64.b64decode(i))) for i in response.json()["images"]]
+    log_img(imgs)
+    return imgs
+
+
+def generate_image_upgrade(
+        img, model, vae_name, prompt, negative_prompt, sampler, steps, cfg_scale, denoising_strength, batch_size=1,
+        width=None, height=None
+):
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "steps": steps,
+        "batch_size": batch_size,
+        "init_images": [
+            to_b64(img)
+        ],
+        "override_settings": {
+            "sd_model_checkpoint": model,
+            "sd_vae": vae_name
+        },
+        "width": img.shape[1] if width is None else width,
+        "height": img.shape[0] if height is None else height,
         "sampler_index": sampler,
         "cfg_scale": cfg_scale,
         "denoising_strength": denoising_strength
@@ -334,12 +362,77 @@ def controlnet_preview(module_name, img, x=64, y=64):
     return Image.open(io.BytesIO(base64.b64decode(a["images"][0])))
 
 
-def controlnet_generate(
+def controlnet_generate_txt(
         module_controlnet, model_controlnet, img, model, vae_name, prompt, negative_prompt, sampler, steps,
         cfg_scale, denoising_strength, batch_size, guidance_start, guidance_end, control_mode, lora_add_detail,
         lora_add_detail_value, lora_add_details, lora_add_details_value, lora_blindbox, lora_eyes_gen,
         lora_eyes_gen_value, lora_polyhedron_fem, lora_polyhedron_fem_value, lora_polyhedron_man,
         lora_polyhedron_man_value, lora_beautiful_detailed, lora_beautiful_detailed_value, x=64, y=64
+):
+    if lora_add_detail:
+        prompt += f" <lora:add_detail:{lora_add_detail_value}>"
+    if lora_add_details:
+        prompt += f" <lora:more_details:{lora_add_details_value}>"
+    if lora_blindbox:
+        prompt += f" <lora:3DMM_V12:1>"
+    if lora_eyes_gen:
+        prompt += f" <lora:more_details:{lora_eyes_gen_value}>"
+    if lora_polyhedron_fem:
+        prompt += f" <lora:polyhedron_all_eyes:{lora_polyhedron_fem_value}>"
+    if lora_polyhedron_man:
+        prompt += f" <lora:polyhedron_men_eyes:{lora_polyhedron_man_value}>"
+    if lora_beautiful_detailed:
+        prompt += f" <lora:BeautifulDetailedEyes:{lora_beautiful_detailed_value}>"
+
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "steps": steps,
+        "batch_size": batch_size,
+        "override_settings": {
+            "sd_model_checkpoint": model,
+            "sd_vae": vae_name
+        },
+        "width": img.shape[1],
+        "height": img.shape[0],
+        "sampler_index": sampler,
+        "cfg_scale": cfg_scale,
+        "alwayson_scripts": {
+            "controlnet": {
+                "args": [
+                    {
+                        "input_image": to_b64(img),
+                        "module": module_controlnet,
+                        "processor_res": max(img.shape),
+                        "threshold_a": x,
+                        "threshold_b": y,
+                        "guidance_start": guidance_start,
+                        "guidance_end": guidance_end,
+                        "control_mode": CONTROL_MODE.index(control_mode),
+                        "pixel_perfect": True
+                    }
+                ]
+            }
+        }
+    }
+    if model_controlnet:
+        payload["alwayson_scripts"]["controlnet"]["args"][0]["model"] = model_controlnet
+
+    response = requests.post(f'{A111_url}/sdapi/v1/txt2img', json=payload)
+    imgs = [Image.open(io.BytesIO(base64.b64decode(i))) for i in response.json()["images"]]
+    log_img(imgs)
+    if len(imgs) == batch_size:
+        return imgs
+    return imgs[:-1], imgs[-1]
+
+
+def controlnet_generate(
+        module_controlnet, model_controlnet, img, model, vae_name, prompt, negative_prompt, sampler, steps,
+        cfg_scale, denoising_strength, batch_size, guidance_start, guidance_end, control_mode, lora_add_detail,
+        lora_add_detail_value, lora_add_details, lora_add_details_value, lora_blindbox, lora_eyes_gen,
+        lora_eyes_gen_value, lora_polyhedron_fem, lora_polyhedron_fem_value, lora_polyhedron_man,
+        lora_polyhedron_man_value, lora_beautiful_detailed, lora_beautiful_detailed_value, x=64, y=64,
+        width=None, height=None
 ):
     if lora_add_detail:
         prompt += f" <lora:add_detail:{lora_add_detail_value}>"
@@ -369,8 +462,8 @@ def controlnet_generate(
             "sd_model_checkpoint": model,
             "sd_vae": vae_name
         },
-        "width": img.shape[1],
-        "height": img.shape[0],
+        "width": img.shape[1] if width is None else width,
+        "height": img.shape[0] if height is None else height,
         "sampler_index": sampler,
         "cfg_scale": cfg_scale,
         "denoising_strength": denoising_strength,
