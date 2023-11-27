@@ -9,11 +9,13 @@ import pandas as pd
 import textwrap
 
 
-RESULT_PATH = "RESULT/"
+RESULT_PATH = "/home/jjjj/Documents/gallery_view/IMGS_22.11/V1R/"
 save_path = "saves/"
 log_path = "log.txt"
-INPUT_CSV = f"/home/jjjj/Downloads/Game Icons 15.09 - with_image.csv"
+INPUT_CSV = f"Game Icons 15.09 - with_image.csv"
 FONT_PATH = "fonts"
+
+ORG_IMG = "ALL_IMGS/"
 
 RESULT_DIRS = [i for i in os.listdir(RESULT_PATH) if os.path.isdir(os.path.join(RESULT_PATH, i))]
 
@@ -43,12 +45,16 @@ def get_imgs(num):
 
 def change_dir(num, button=None):
     if button is None:
-        return get_imgs(num), "# " + RESULT_DIRS[int(num)]
+        return get_imgs(num), "# " + RESULT_DIRS[int(num)], Image.open(
+        os.path.join(ORG_IMG, RESULT_DIRS[int(num)] + ".png")
+    )
     if button == "+" and num < len(RESULT_DIRS):
         num += 1
     elif num > 0:
         num -= 1
-    return get_imgs(num), num, "# " + RESULT_DIRS[int(num)]
+    return get_imgs(num), num, "# " + RESULT_DIRS[int(num)], Image.open(
+        os.path.join(ORG_IMG, RESULT_DIRS[int(num)] + ".png")
+    )
 
 
 def select_image(evt: gr.SelectData, gallery, name):
@@ -150,6 +156,7 @@ with gr.Blocks() as demo:
                 label="Generated images", show_label=False, elem_id="gallery", columns=7, height=800
             )
             with gr.Row():
+                org_img = gr.Image(width=300)
                 choosed_img = gr.Image(width=300)
 
         with gr.TabItem("Add text"):
@@ -185,19 +192,19 @@ with gr.Blocks() as demo:
     page.submit(
         change_dir,
         [page],
-        [gallery, dir_name]
+        [gallery, dir_name, org_img]
     )
 
     prev_page.click(
         lambda page: change_dir(page, "-"),
         [page],
-        [gallery, page, dir_name]
+        [gallery, page, dir_name, org_img]
     )
 
     next_page.click(
         lambda page: change_dir(page, "+"),
         [page],
-        [gallery, page, dir_name]
+        [gallery, page, dir_name, org_img]
     )
 
     gallery.select(
