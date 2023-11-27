@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Replace 'path_to_your_python_app' with the actual path to your Python application script.
-APP_PATH="22.11 generate_img.py"
-PID_FILE="/var/run/my_python_app.pid"
+APP_PATH="main.py"
+PID_FILE="/var/run/my_python_apphhh.pid"
 
 start() {
     if [ -f $PID_FILE ]; then

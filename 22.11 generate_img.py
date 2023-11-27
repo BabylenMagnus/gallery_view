@@ -50,7 +50,7 @@ for i in tqdm(X):
     if os.path.exists(out_path) and len(os.listdir(out_path)) > 50:
         continue
 
-    os.makedirs(out_path)
+    os.makedirs(out_path, exist_ok=True)
 
     img = Image.open(os.path.join(INPUT_PATH, i))
     random.shuffle(models_)
