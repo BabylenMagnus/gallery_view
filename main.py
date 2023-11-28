@@ -134,7 +134,7 @@ def save_img(img, page):
     img = Image.fromarray(img)
     name = RESULT_DIRS[int(page)]
     print("save ", name)
-    img.save(save_path + name + str(len(glob.glob(save_path + name + "*.png"))) + ".png")
+    img.save(save_path + name + "_" + str(len(glob.glob(save_path + name + "*.png"))) + ".png")
     return img
 
 
@@ -156,13 +156,13 @@ with gr.Blocks() as demo:
                 label="Generated images", show_label=False, elem_id="gallery", columns=7, height=800
             )
             with gr.Row():
-                org_img = gr.Image(width=300)
-                choosed_img = gr.Image(width=300)
+                org_img = gr.Image(width=408)
+                choosed_img = gr.Image(width=408)
 
         with gr.TabItem("Add text"):
             with gr.Row():
-                real_img = gr.Image(height=600)
-                texted_image = gr.Image(height=600)
+                real_img = gr.Image(height=408)
+                texted_image = gr.Image(height=408)
                 with gr.Column():
 
                     with gr.Row():
@@ -187,7 +187,10 @@ with gr.Blocks() as demo:
 
                     add_text_from_font = gr.Button("Take Text Font", variant="primary")
                     save_button = gr.Button("Save image", variant="primary")
-            last_save = gr.Image(width=300)
+            last_save = gr.Image(width=408)
+
+        with gr.TabItem("Таблица"):
+            gr.Markdown("\n\n".join([f"{i} - {j}" for i, j in enumerate(RESULT_DIRS)]))
 
     page.submit(
         change_dir,
