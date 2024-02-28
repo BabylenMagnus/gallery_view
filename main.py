@@ -8,14 +8,15 @@ import glob
 import pandas as pd
 import textwrap
 
+from utils.chooser import draw_textbox, add_text_font, save_image
 
-RESULT_PATH = "/home/jjjj/Documents/gallery_view/IMGS_22.11/V1R/"
-save_path = "saves/"
-log_path = "log.txt"
-INPUT_CSV = f"Game Icons 15.09 - with_image.csv"
+
+RESULT_PATH = r"C:\Users\user\Documents\2_23_OUTPAINT\\"
+save_path = r"OUTPUT\2_26_saves"
+INPUT_CSV = f"data/2_21_without_image.csv"
 FONT_PATH = "fonts"
 
-ORG_IMG = "ALL_IMGS/"
+ORG_IMG = r"OUTPUT\2_21_output"
 
 RESULT_DIRS = [i for i in os.listdir(RESULT_PATH) if os.path.isdir(os.path.join(RESULT_PATH, i))]
 
@@ -26,17 +27,13 @@ name_provider = {}
 xl = pd.read_csv(INPUT_CSV)
 
 for i in range(len(xl)):
-    i = xl.loc[i]
-    if not isinstance(i['name'], str):
-        continue
-    if i['provider'] in ["pragmaticplaylive", "hogaming", "xprogaming", "ezugi", "vivogaming"]:
-        continue
-    name = i['name'].strip().lower().replace('`', "'")
+    i = xl.iloc[i]
 
-    if i['provider'] == 'relaxgamingslots':
-        name = name.replace('mobile', '').strip()
+    if not isinstance(i['Name'], str):
+        continue
 
-    name_provider[name] = i['provider']
+    name = i['Hash']
+    name_provider[name] = i['Provider']
 
 
 def get_imgs(num):
@@ -46,8 +43,8 @@ def get_imgs(num):
 def change_dir(num, button=None):
     if button is None:
         return get_imgs(num), "# " + RESULT_DIRS[int(num)], Image.open(
-        os.path.join(ORG_IMG, RESULT_DIRS[int(num)] + ".png")
-    )
+            os.path.join(ORG_IMG, RESULT_DIRS[int(num)] + ".png")
+        )
     if button == "+" and num < len(RESULT_DIRS):
         num += 1
     elif num > 0:
@@ -88,56 +85,6 @@ def select_image(evt: gr.SelectData, gallery, name):
     return i, i, *out, *out_font, *out_start, provider
 
 
-def add_text_font(
-        real_img, fst_txt, scn_txt, thr_txt, prv_txt, fst_fnt, scn_fnt, thr_fnt, prv_fnt,
-        fst_start, scn_start, thr_start, prv_start
-):
-    img = Image.fromarray(real_img.copy())
-
-    for txt, fnt, start in zip(
-            [fst_txt, scn_txt, thr_txt],
-            [fst_fnt, scn_fnt, thr_fnt],
-            [fst_start, scn_start, thr_start]
-    ):
-        image = Image.new('RGB', img.size, "white")
-        draw = ImageDraw.Draw(image)
-        font = ImageFont.truetype(os.path.join(FONT_PATH, "RubikWetPaint-Regular.ttf"), fnt)
-
-        _, _, w, h = draw.textbbox(
-            (0, 0), txt, font=font
-        )
-
-        draw = ImageDraw.Draw(img)
-        draw.text(((img.size[0] - w) / 2, int(start)), txt, font=font, fill="white")
-
-    image = Image.new('RGB', img.size, "white")
-    draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype(os.path.join(FONT_PATH, "RedHatText-VariableFont_wght.ttf"), prv_fnt)
-
-    _, _, w, h = draw.textbbox(
-        (0, 0), prv_txt, font=font
-    )
-
-    draw = ImageDraw.Draw(img)
-    draw.text(((img.size[0] - w) / 2, int(prv_start)), prv_txt, font=font, fill="white")
-
-    return img
-
-
-def load_img_to_array(img_p):
-    img = Image.open(img_p)
-    img = img.convert("RGB")
-    return np.array(img)
-
-
-def save_img(img, page):
-    img = Image.fromarray(img)
-    name = RESULT_DIRS[int(page)]
-    print("save ", name)
-    img.save(save_path + name + "_" + str(len(glob.glob(save_path + name + "*.png"))) + ".png")
-    return img
-
-
 with gr.Blocks() as demo:
     with gr.Tabs():
         with gr.TabItem("Choose Image"):
@@ -164,7 +111,6 @@ with gr.Blocks() as demo:
                 real_img = gr.Image(height=408)
                 texted_image = gr.Image(height=408)
                 with gr.Column():
-
                     with gr.Row():
                         fst_txt = gr.Textbox(value="")
                         fst_fnt = gr.Slider(minimum=1, maximum=120, value=60)
@@ -234,7 +180,7 @@ with gr.Blocks() as demo:
     )
 
     save_button.click(
-        save_img,
+        save_image,
         [texted_image, page],
         [last_save]
     )

@@ -1,7 +1,6 @@
 import glob
-import os
 
-from utils import *
+from utils.utils import *
 
 
 RESULT_DIR = r"IMGS_1_11"

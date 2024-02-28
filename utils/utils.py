@@ -16,14 +16,19 @@ from uuid import uuid4
 
 
 eader = easyocr.Reader(['en'])
-A111_url = "http://213.108.196.111:47595"
+A111_url = "http://127.0.0.1:7860"
 BASE_NEGATIV_PROMPT = (
-    "two straws, sketches, worst quality, low quality, normal quality, lowres, normal quality, freckles, ugly, bad, "
-    "sketch, bad anatomy, out of view, cut off, ugly, deformed, mutated, skin spots, skin spots, acnes, skin blemishes,"
-    "extra fingers,fewer fingers, (ugly eyes, deformed iris, deformed pupils, fused lips and teeth:1.2), text, jpeg "
-    "artifacts, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry,"
-    " dehydrated, bad anatomy, bad proportions"
+    "worst quality, low quality, normal quality, lowres, ugly, bad, sketch, text, jpeg, artifacts, room, wall,"
+    " wallpaper, floor, gradient, poster, banner, blurring, fog, smoke, blur, monochrome background, monochrome, "
+    "background"
 )
+# BASE_NEGATIV_PROMPT = (
+#     "two straws, sketches, worst quality, low quality, normal quality, lowres, normal quality, freckles, ugly, bad, "
+#     "sketch, bad anatomy, out of view, cut off, ugly, deformed, mutated, skin spots, skin spots, acnes, skin blemishes,"
+#     "extra fingers,fewer fingers, (ugly eyes, deformed iris, deformed pupils, fused lips and teeth:1.2), text, jpeg "
+#     "artifacts, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry,"
+#     " dehydrated, bad anatomy, bad proportions"
+# )
 
 SIZES = {
     "Главный 1174 х 360": [360, 1174],
@@ -38,7 +43,7 @@ SIZES = {
 
 def log_img(imgs):
     for img in imgs:
-        img.save(os.path.join("log", datetime.now().strftime("%d%m_%H_%M%S") + f"{str(uuid4())[:5]}.png"))
+        img.save(os.path.join("../log", f"{str(uuid4())[:8]}.png"))
 
 
 def ocr_detect(img):
@@ -630,7 +635,7 @@ def reference_generate(
     )
 
 
-FONT_PATH = "fonts/"
+FONT_PATH = "../fonts/"
 MODELS = [i for i in get_models() if "inp" not in i.lower()]
 INP_MODELS = [i for i in get_models() if "inp" in i.lower()]
 CONTROL_MODE = ["Balanced", "My prompt is more important", "ControlNet is more important"]
